@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Waste Management – India Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080E16;
+  --surface:#0D1520;
+  --card:#111D2C;
+  --card2:#162234;
+  --border:#1E3048;
+  --border2:#243858;
+  --green:#00E87A;
+  --blue:#38BDF8;
+  --amber:#FBBF24;
+  --red:#F87171;
+  --orange:#FB923C;
+  --text:#D4E6F8;
+  --muted:#4A6680;
+  --font:'Rajdhani',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
+#app{display:flex;height:100vh}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:280px;min-width:280px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;z-index:10;
+}
+
+.sb-head{
+  padding:16px 16px 12px;
+  background:linear-gradient(135deg,#0D1F35 0%,#0B1820 100%);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sb-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.sb-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,#00E87A20,#00E87A40);
+  border:1px solid #00E87A50;
+  display:grid;place-items:center;font-size:20px;flex-shrink:0;
+}
+.sb-title{font-size:16px;font-weight:700;letter-spacing:.06em;line-height:1.2}
+.sb-title small{font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.08em;display:block}
+
+#crumb{
+  padding:7px 14px;
+  background:var(--card);border-bottom:1px solid var(--border);
+  font-size:10px;font-family:var(--mono);color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;
+}
+#crumb em{color:var(--green);font-style:normal}
+
+/* panels inside sidebar */
+#sb-body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+#sb-body::-webkit-scrollbar{width:4px}
+#sb-body::-webkit-scrollbar-track{background:transparent}
+#sb-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* accordion steps */
+.step{border-bottom:1px solid var(--border);flex-shrink:0}
+.step-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;cursor:pointer;user-select:none;
+  background:var(--card);transition:background .15s;
+}
+.step-head:hover{background:var(--card2)}
+.step-left{display:flex;align-items:center;gap:8px}
+.step-badge{
+  width:24px;height:24px;border-radius:7px;
+  display:grid;place-items:center;
+  font-size:9px;font-weight:700;font-family:var(--mono);flex-shrink:0;
+}
+.b-state{background:#38BDF815;color:var(--blue);border:1px solid #38BDF830}
+.b-dist {background:#FBBF2415;color:var(--amber);border:1px solid #FBBF2430}
+.b-city {background:#00E87A15;color:var(--green);border:1px solid #00E87A30}
+.step-title{font-size:13px;font-weight:700;letter-spacing:.04em}
+.step-count{font-size:10px;font-family:var(--mono);color:var(--muted)}
+.caret{font-size:9px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.step.open .caret{transform:rotate(180deg)}
+
+.step-body{display:none;padding:8px 8px 4px}
+.step.open .step-body{display:block}
+
+.search-input{
+  width:100%;padding:6px 10px;margin-bottom:6px;
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:7px;color:var(--text);font-size:11px;
+  font-family:var(--font);letter-spacing:.02em;outline:none;
+}
+.search-input:focus{border-color:var(--blue)}
+.search-input::placeholder{color:var(--muted)}
+
+.list-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;border-radius:8px;cursor:pointer;
+  font-size:12px;font-weight:600;letter-spacing:.03em;
+  color:var(--muted);transition:all .12s;
+}
+.list-item:hover{background:var(--card2);color:var(--text)}
+.list-item.selected{background:#00E87A12;color:var(--green);border:1px solid #00E87A25}
+.list-item .code{
+  font-family:var(--mono);font-size:10px;
+  background:var(--card);padding:2px 6px;border-radius:4px;
+  border:1px solid var(--border2);flex-shrink:0;color:var(--muted);
+}
+
+.msg{font-size:11px;color:var(--muted);padding:8px 10px;font-family:var(--mono)}
+.msg.loading{display:flex;align-items:center;gap:6px}
+.spin{
+  display:inline-block;width:11px;height:11px;
+  border:2px solid var(--border2);border-top-color:var(--blue);
+  border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* GPS */
+#gps-bar{
+  margin:10px 12px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:12px;padding:10px 12px;flex-shrink:0;
+}
+.gps-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--green)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+#gps-text{font-size:10px;font-family:var(--mono);color:var(--muted);line-height:1.7;margin-bottom:8px}
+#gps-btn{
+  width:100%;padding:7px;
+  background:#00E87A12;border:1px solid #00E87A35;
+  color:var(--green);border-radius:8px;cursor:pointer;
+  font-size:12px;font-weight:700;font-family:var(--font);
+  letter-spacing:.05em;transition:all .15s;
+}
+#gps-btn:hover{background:#00E87A20}
+
+/* legend */
+#legend{
+  margin:0 12px 12px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:12px;padding:10px 12px;flex-shrink:0;
+}
+.leg-title{font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.leg-row{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── MAP AREA ── */
+#map-wrap{flex:1;display:flex;flex-direction:column;position:relative}
+
+#toolbar{
+  height:48px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;
+}
+.tb-label{font-size:13px;font-weight:700;letter-spacing:.05em;margin-right:auto}
+.tb-label span{font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.03em}
+.layer-btn{
+  padding:5px 12px;border-radius:7px;cursor:pointer;
+  font-size:11px;font-weight:700;font-family:var(--font);letter-spacing:.04em;
+  border:1px solid var(--border2);background:var(--card);color:var(--muted);transition:all .15s;
+}
+.layer-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.layer-btn:hover:not(.on){border-color:var(--blue);color:var(--blue)}
+
+#map{flex:1}
+
+/* info panel (zone/locality) */
+#info-panel{
+  position:absolute;right:14px;top:60px;
+  width:250px;z-index:800;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 20px 50px rgba(0,0,0,.6);
+  transform:translateX(280px);opacity:0;pointer-events:none;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+#info-panel.show{transform:translateX(0);opacity:1;pointer-events:all}
+.ip-close{
+  position:absolute;top:10px;right:10px;width:22px;height:22px;
+  background:rgba(255,255,255,.08);border:none;color:var(--muted);
+  border-radius:50%;cursor:pointer;font-size:12px;display:grid;place-items:center;z-index:1;
+}
+.ip-close:hover{background:rgba(255,255,255,.18);color:var(--text)}
+.ip-head{
+  padding:14px 16px;
+  background:linear-gradient(135deg,#0D2A1E,#0D1F35);
+  border-bottom:1px solid var(--border);
+}
+.ip-type{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.ip-name{font-size:15px;font-weight:700;letter-spacing:.04em}
+
+.score-wrap{
+  padding:14px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.ring-outer{width:60px;height:60px;position:relative;flex-shrink:0}
+.ring-outer svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:700;font-family:var(--mono)}
+.status-pill{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;margin-bottom:4px;display:inline-block}
+.s-good{background:#00E87A18;color:var(--green)}
+.s-moderate{background:#FBBF2418;color:var(--amber)}
+.s-dirty{background:#FB923C18;color:var(--orange)}
+.s-critical{background:#F8717118;color:var(--red);animation:blink .8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+
+.metrics{padding:10px 16px}
+.m-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;
+}
+.m-row:last-child{border-bottom:none}
+.m-label{color:var(--muted);font-weight:600}
+.m-val{font-family:var(--mono);font-weight:700;font-size:11px}
+
+/* zoom chip */
+#zoom-chip{
+  position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  background:var(--surface);border:1px solid var(--border2);
+  padding:4px 14px;border-radius:20px;font-size:10px;
+  font-family:var(--mono);color:var(--muted);z-index:800;pointer-events:none;
+  white-space:nowrap;
+}
+#zoom-chip em{color:var(--green);font-style:normal}
+
+/* toast */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  background:var(--card2);border:1px solid var(--border2);
+  padding:8px 18px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.03em;
+  color:var(--text);z-index:9999;opacity:0;pointer-events:none;
+  transition:opacity .3s;white-space:nowrap;font-family:var(--font);
+}
+#toast.show{opacity:1}
+
+/* leaflet overrides */
+.leaflet-container{background:#060C14!important}
+.leaflet-control-zoom a{background:var(--card)!important;border-color:var(--border)!important;color:var(--text)!important}
+.leaflet-control-zoom a:hover{background:var(--card2)!important}
+.leaflet-popup-content-wrapper{background:var(--card2)!important;color:var(--text)!important;border:1px solid var(--border2)!important;border-radius:10px!important;box-shadow:0 10px 30px rgba(0,0,0,.5)!important}
+.leaflet-popup-tip{background:var(--card2)!important}
+.leaflet-popup-content{font-family:var(--font);font-size:12px;margin:8px 12px}
+.leaflet-popup-content b{color:var(--green);font-family:var(--mono)}
+
+.gps-dot-marker{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--blue);border:3px solid #fff;
+  box-shadow:0 0 0 5px rgba(56,189,248,.25);
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside id="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">
+      <div class="sb-icon">♻</div>
+      <div class="sb-title">SMART WASTE<small>India Zone Management</small></div>
+    </div>
+  </div>
+  <div id="crumb">📍 <em>INDIA</em></div>
+
+  <div id="sb-body">
+
+    <!-- State step -->
+    <div class="step open" id="step-state">
+      <div class="step-head" onclick="toggleStep('state')">
+        <div class="step-left">
+          <div class="step-badge b-state">ST</div>
+          <span class="step-title" id="state-title">State</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="step-count" id="state-count"></span>
+          <span class="caret">▼</span>
+        </div>
+      </div>
+      <div class="step-body">
+        <input class="search-input" id="state-search" placeholder="🔍 Search state…" oninput="filterList('state')">
+        <div id="state-list"><div class="msg loading"><span class="spin"></span> Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- District step -->
+    <div class="step" id="step-dist">
+      <div class="step-head" onclick="toggleStep('dist')">
+        <div class="step-left">
+          <div class="step-badge b-dist">DT</div>
+          <span class="step-title" id="dist-title">District</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="step-count" id="dist-count"></span>
+          <span class="caret">▼</span>
+        </div>
+      </div>
+      <div class="step-body">
+        <input class="search-input" id="dist-search" placeholder="🔍 Search district…" oninput="filterList('dist')">
+        <div id="dist-list"><div class="msg">Select a state first.</div></div>
+      </div>
+    </div>
+
+    <!-- Locality step -->
+    <div class="step" id="step-city">
+      <div class="step-head" onclick="toggleStep('city')">
+        <div class="step-left">
+          <div class="step-badge b-city">LC</div>
+          <span class="step-title" id="city-title">City / Locality</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="step-count" id="city-count"></span>
+          <span class="caret">▼</span>
+        </div>
+      </div>
+      <div class="step-body">
+        <input class="search-input" id="city-search" placeholder="🔍 Search locality…" oninput="filterList('city')">
+        <div id="city-list"><div class="msg">Select a district first.</div></div>
+      </div>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <!-- GPS -->
+    <div id="gps-bar">
+      <div class="gps-head"><div class="pulse"></div> MY LOCATION</div>
+      <div id="gps-text">Tap "Locate Me" to detect position.</div>
+      <button id="gps-btn" onclick="locateMe()">📍 Locate Me</button>
+    </div>
+
+    <!-- Legend -->
+    <div id="legend">
+      <div class="leg-title">Cleanliness Level</div>
+      <div class="leg-row"><div class="dot" style="background:#00E87A"></div> Clean (Good) · Score ≥ 80</div>
+      <div class="leg-row"><div class="dot" style="background:#FBBF24"></div> Moderate · Score 60–79</div>
+      <div class="leg-row"><div class="dot" style="background:#FB923C"></div> Dirty · Score 40–59</div>
+      <div class="leg-row"><div class="dot" style="background:#F87171"></div> Critical · Score &lt; 40</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAP ═══ -->
+<div id="map-wrap">
+  <div id="toolbar">
+    <div class="tb-label">MAP VIEW <span id="tb-sub">— India Overview</span></div>
+    <button class="layer-btn on" id="btn-street"    onclick="setLayer('street')">🗺 Street</button>
+    <button class="layer-btn"   id="btn-satellite" onclick="setLayer('satellite')">🛰 Satellite</button>
+    <button class="layer-btn"   id="btn-terrain"   onclick="setLayer('terrain')">⛰ Terrain</button>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Info panel -->
+  <div id="info-panel">
+    <button class="ip-close" onclick="closePanel()">✕</button>
+    <div class="ip-head">
+      <div class="ip-type" id="ip-type">LOCALITY</div>
+      <div class="ip-name" id="ip-name">—</div>
+    </div>
+    <!-- Score ring (shown only for zones) -->
+    <div class="score-wrap" id="ip-score-wrap" style="display:none">
+      <div class="ring-outer">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="24" fill="none" stroke="#1E3048" stroke-width="6"/>
+          <circle cx="30" cy="30" r="24" fill="none" stroke="#00E87A" stroke-width="6"
+            stroke-dasharray="150.8" stroke-dashoffset="40"
+            stroke-linecap="round" id="ring-arc"/>
+        </svg>
+        <div class="ring-num" id="ring-num">—</div>
+      </div>
+      <div>
+        <span class="status-pill s-good" id="status-pill">GOOD</span>
+        <div style="font-size:10px;color:var(--muted)">Cleanliness</div>
+      </div>
+    </div>
+    <div class="metrics" id="ip-metrics">
+      <div class="m-row"><span class="m-label">📍 Coordinates</span><span class="m-val" id="ip-coords">—</span></div>
+      <div class="m-row"><span class="m-label">🏷 Type</span><span class="m-val" id="ip-kind">—</span></div>
+      <div class="m-row"><span class="m-label">🗺 District</span><span class="m-val" id="ip-district">—</span></div>
+      <div class="m-row"><span class="m-label">🏛 State</span><span class="m-val" id="ip-state">—</span></div>
+    </div>
+  </div>
+
+  <div id="zoom-chip">Zoom: <em id="z-num">5</em> — <span id="z-hint">India Overview</span></div>
+</div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────
+const API = 'http://localhost:8000';
+const CIRC = 2 * Math.PI * 24; // circumference for r=24
+
+// State center coords [lat, lng, zoom]
+const STATE_CENTERS = {
+  "Andaman And Nicobar Islands":[11.7401,92.6586,8],
+  "Andhra Pradesh":[15.9129,79.74,7],
+  "Arunachal Pradesh":[27.1004,93.6167,7],
+  "Assam":[26.2006,92.9376,7],
+  "Bihar":[25.0961,85.3131,7],
+  "Chandigarh":[30.7333,76.7794,11],
+  "Chhattisgarh":[21.2787,81.8661,7],
+  "Dadra And Nagar Haveli And Daman And Diu":[20.4283,72.8397,9],
+  "Delhi":[28.7041,77.1025,10],
+  "Goa":[15.2993,74.124,9],
+  "Gujarat":[22.2587,71.1924,7],
+  "Haryana":[29.0588,76.0856,8],
+  "Himachal Pradesh":[31.1048,77.1734,8],
+  "Jammu And Kashmir":[33.7782,76.5762,7],
+  "Jharkhand":[23.6102,85.2799,7],
+  "Karnataka":[15.3173,75.7139,7],
+  "Kerala":[10.8505,76.2711,7],
+  "Ladakh":[34.1526,77.577,7],
+  "Lakshadweep":[10.328,72.7847,9],
+  "Madhya Pradesh":[22.9734,78.6569,7],
+  "Maharashtra":[19.7515,75.7139,7],
+  "Manipur":[24.6637,93.9063,8],
+  "Meghalaya":[25.467,91.3662,8],
+  "Mizoram":[23.1645,92.9376,8],
+  "Nagaland":[26.1584,94.5624,8],
+  "Odisha":[20.9517,85.0985,7],
+  "Puducherry":[11.9416,79.8083,10],
+  "Punjab":[31.1471,75.3412,8],
+  "Rajasthan":[27.0238,74.2179,7],
+  "Sikkim":[27.533,88.5122,9],
+  "Tamil Nadu":[11.1271,78.6569,7],
+  "Telangana":[18.1124,79.0193,7],
+  "Tripura":[23.9408,91.9882,8],
+  "Uttar Pradesh":[26.8467,80.9462,7],
+  "Uttarakhand":[30.0668,79.0193,8],
+  "West Bengal":[22.9868,87.855,7],
+};
+
+// ─── STATE ────────────────────────────────────────────────────────
+let allDistricts = [];
+let stateMap = {}; // stateName → [{lgdCode, districtName, short}]
+let selState = null, selDistrict = null, selLocality = null;
+let map, activeLayer, layers = {};
+let stateMs=[], distMs=[], cityMs=[], gpsM=null;
+
+// ─── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  map = L.map('map', {zoomControl:true, minZoom:2}).setView([20.5937,78.9629], 5);
+
+  layers.street    = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19});
+  layers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+  layers.terrain   = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'© OpenTopoMap',maxZoom:17});
+
+  layers.street.addTo(map);
+  activeLayer = layers.street;
+
+  map.on('zoomend', updateZoomChip);
+  updateZoomChip();
+
+  await loadDistricts();
+  renderStateMarkers();
+  setTimeout(locateMe, 600);
+}
+
+// ─── LOAD DISTRICTS.JSON ──────────────────────────────────────────
+async function loadDistricts() {
+  try {
+    const res = await fetch('/districts.json');
+    allDistricts = await res.json();
+    stateMap = {};
+    for (const d of allDistricts) {
+      const s = d.StateName;
+      if (!stateMap[s]) stateMap[s] = [];
+      stateMap[s].push({
+        lgdCode:      d.DistrictLGDCode,
+        districtName: d['DistrictName(InEnglish)'],
+        short:        d.ShortNameOfDistrict,
+        stateCode:    d.StateCode
+      });
+    }
+    buildStateList();
+    toast(`✅ Loaded ${allDistricts.length} districts across ${Object.keys(stateMap).length} states/UTs`);
+  } catch(e) {
+    document.getElementById('state-list').innerHTML = '<div class="msg">⚠ Could not load districts.json. Is server.js running?</div>';
+    console.error(e);
+  }
+}
+
+// ─── STATE LIST ───────────────────────────────────────────────────
+function buildStateList() {
+  const ul = document.getElementById('state-list');
+  ul.innerHTML = '';
+  const names = Object.keys(stateMap).sort();
+  document.getElementById('state-count').textContent = names.length;
+  names.forEach(name => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.id = 'st-' + esc(name);
+    const cnt = stateMap[name].length;
+    el.innerHTML = `<span>${name}</span><span class="code">${cnt}D</span>`;
+    el.onclick = () => pickState(name);
+    ul.appendChild(el);
+  });
+}
+
+// ─── SELECT STATE ─────────────────────────────────────────────────
+function pickState(name) {
+  selState = name; selDistrict = null; selLocality = null;
+  allHighlight('st-', name, esc);
+  document.getElementById('state-title').textContent = name.split(' ').slice(0,2).join(' ');
+  document.getElementById('tb-sub').textContent = '— ' + name;
+  setCrumb(name, '', '');
+
+  const c = STATE_CENTERS[name] || [20.5937, 78.9629, 7];
+  map.flyTo([c[0], c[1]], c[2], {duration:1.2});
+
+  clearMs([...distMs, ...cityMs]);
+  distMs=[]; cityMs=[];
+  closePanel();
+
+  buildDistrictList(name);
+  openStep('dist');
+  document.getElementById('step-city').classList.remove('open');
+  document.getElementById('city-list').innerHTML = '<div class="msg">Select a district.</div>';
+  document.getElementById('city-count').textContent = '';
+  document.getElementById('city-title').textContent = 'City / Locality';
+
+  // Place district markers async for visible ones
+  placeDistrictMarkers(name);
+}
+
+// ─── DISTRICT LIST ────────────────────────────────────────────────
+function buildDistrictList(state) {
+  const ul = document.getElementById('dist-list');
+  const dists = (stateMap[state]||[]).slice().sort((a,b)=>a.districtName.localeCompare(b.districtName));
+  document.getElementById('dist-count').textContent = dists.length;
+  ul.innerHTML = '';
+  dists.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.id = 'dt-' + d.lgdCode;
+    el.innerHTML = `<span>${d.districtName}</span><span class="code">${d.short}</span>`;
+    el.onclick = () => pickDistrict(d);
+    ul.appendChild(el);
+  });
+  document.getElementById('dist-title').textContent = 'District';
+}
+
+// ─── SELECT DISTRICT ──────────────────────────────────────────────
+async function pickDistrict(distObj) {
+  selDistrict = distObj; selLocality = null;
+  document.querySelectorAll('[id^="dt-"]').forEach(e => e.classList.remove('selected'));
+  const el = document.getElementById('dt-' + distObj.lgdCode);
+  if (el) el.classList.add('selected');
+  document.getElementById('dist-title').textContent = distObj.districtName;
+  setCrumb(selState, distObj.districtName, '');
+
+  clearMs(cityMs); cityMs = [];
+  closePanel();
+  document.getElementById('city-list').innerHTML = '<div class="msg loading"><span class="spin"></span> Geocoding district…</div>';
+  document.getElementById('city-count').textContent = '';
+  openStep('city');
+
+  try {
+    const r = await fetch(`${API}/api/geocode/district?name=${encodeURIComponent(distObj.districtName)}&state=${encodeURIComponent(selState)}`);
+    if (!r.ok) throw new Error('geocode fail');
+    const geo = await r.json();
+    distObj._lat = geo.lat; distObj._lng = geo.lng;
+
+    map.flyTo([geo.lat, geo.lng], 11, {duration:1.3});
+
+    // District label marker
+    const dm = L.marker([geo.lat, geo.lng], {
+      icon: L.divIcon({
+        className:'',
+        html:`<div style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.6);color:#FBBF24;
+              padding:4px 9px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+              backdrop-filter:blur(4px)">${distObj.short}</div>`,
+        iconSize:[50,26], iconAnchor:[25,13]
+      })
+    }).addTo(map);
+    dm.bindTooltip(distObj.districtName, {sticky:true});
+    distMs.push(dm);
+
+    fetchLocalities(geo.lat, geo.lng, distObj.districtName);
+
+  } catch(e) {
+    document.getElementById('city-list').innerHTML = '<div class="msg">⚠ Geocode failed. Check server connection.</div>';
+    toast('⚠ Could not geocode ' + distObj.districtName);
+  }
+}
+
+// ─── FETCH LOCALITIES (Overpass via server proxy) ─────────────────
+async function fetchLocalities(lat, lng, distName) {
+  document.getElementById('city-list').innerHTML = '<div class="msg loading"><span class="spin"></span> Loading localities from OpenStreetMap…</div>';
+  try {
+    const url = `${API}/api/localities?lat=${lat}&lng=${lng}&districtName=${encodeURIComponent(distName)}&state=${encodeURIComponent(selState)}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('localities fail');
+    const data = await r.json();
+    const locs = data.localities || [];
+    if (!locs.length) {
+      document.getElementById('city-list').innerHTML = '<div class="msg">No localities found for this district.</div>';
+      return;
+    }
+    buildCityList(locs);
+    renderCityMarkers(locs);
+    document.getElementById('city-count').textContent = locs.length;
+    document.getElementById('city-title').textContent = 'City / Locality';
+    toast(`📍 ${locs.length} localities loaded for ${distName}`);
+  } catch(e) {
+    document.getElementById('city-list').innerHTML = '<div class="msg">⚠ Could not fetch localities. Is server running?</div>';
+  }
+}
+
+// ─── CITY LIST ────────────────────────────────────────────────────
+function buildCityList(locs) {
+  const ul = document.getElementById('city-list');
+  ul.innerHTML = '';
+  const ICONS = {city:'🏙',town:'🏘',suburb:'🏠',village:'🌾',quarter:'🏬',neighbourhood:'🏡'};
+  locs.forEach(loc => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.id = 'cy-' + esc(loc.name);
+    const ic = ICONS[loc.type] || '📍';
+    el.innerHTML = `<span>${ic} ${loc.name}</span><span class="code">${loc.type||'place'}</span>`;
+    el.onclick = () => pickLocality(loc);
+    ul.appendChild(el);
+  });
+}
+
+// ─── SELECT LOCALITY ──────────────────────────────────────────────
+function pickLocality(loc) {
+  selLocality = loc;
+  document.querySelectorAll('[id^="cy-"]').forEach(e => e.classList.remove('selected'));
+  const el = document.getElementById('cy-' + esc(loc.name));
+  if (el) el.classList.add('selected');
+  document.getElementById('city-title').textContent = loc.name;
+  setCrumb(selState, selDistrict?.districtName||'', loc.name);
+
+  map.flyTo([loc.lat, loc.lng], 14, {duration:1.1});
+
+  showLocPanel(loc);
+}
+
+// ─── RENDER CITY MARKERS ──────────────────────────────────────────
+function renderCityMarkers(locs) {
+  clearMs(cityMs); cityMs=[];
+  const COLORS = {city:'#60A5FA',town:'#818CF8',suburb:'#34D399',village:'#FBBF24',quarter:'#F87171',neighbourhood:'#A78BFA'};
+  locs.forEach(loc => {
+    const col = COLORS[loc.type] || '#94A3B8';
+    const label = loc.name.length > 14 ? loc.name.slice(0,13)+'…' : loc.name;
+    const m = L.marker([loc.lat, loc.lng], {
+      icon: L.divIcon({
+        className:'',
+        html:`<div style="background:rgba(6,12,22,.75);border:1.5px solid ${col};color:${col};
+              padding:3px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;
+              cursor:pointer;backdrop-filter:blur(4px);white-space:nowrap">${label}</div>`,
+        iconSize:[null,18], iconAnchor:[0,9]
+      })
+    }).addTo(map);
+    m.bindTooltip(`${loc.name} (${loc.type||'place'})`, {sticky:true});
+    m.on('click', () => pickLocality(loc));
+    cityMs.push(m);
+  });
+}
+
+// ─── STATE MARKERS ───────────────────────────────────────────────
+function renderStateMarkers() {
+  clearMs(stateMs); stateMs=[];
+  Object.entries(STATE_CENTERS).forEach(([name, c]) => {
+    const abbr = name.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+    const m = L.marker([c[0], c[1]], {
+      icon: L.divIcon({
+        className:'',
+        html:`<div style="background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.4);color:#00E87A;
+              padding:3px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+              cursor:pointer;backdrop-filter:blur(4px)">${abbr}</div>`,
+        iconSize:[36,22], iconAnchor:[18,11]
+      })
+    }).addTo(map);
+    m.bindTooltip(name, {sticky:true});
+    m.on('click', () => pickState(name));
+    stateMs.push(m);
+  });
+}
+
+// ─── PLACE DISTRICT MARKERS ASYNC ────────────────────────────────
+async function placeDistrictMarkers(stateName) {
+  const dists = (stateMap[stateName]||[]).slice(0, 15);
+  for (const d of dists) {
+    try {
+      const r = await fetch(`${API}/api/geocode/district?name=${encodeURIComponent(d.districtName)}&state=${encodeURIComponent(stateName)}`);
+      if (!r.ok) continue;
+      const geo = await r.json();
+      d._lat = geo.lat; d._lng = geo.lng;
+      const m = L.marker([geo.lat, geo.lng], {
+        icon: L.divIcon({
+          className:'',
+          html:`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.4);color:#FBBF24;
+                padding:2px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;
+                cursor:pointer;backdrop-filter:blur(4px)">${d.short}</div>`,
+          iconSize:[40,20], iconAnchor:[20,10]
+        })
+      }).addTo(map);
+      m.bindTooltip(d.districtName, {sticky:true});
+      m.on('click', () => pickDistrict(d));
+      distMs.push(m);
+      await sleep(140);
+    } catch(_) {}
+  }
+}
+
+// ─── INFO PANEL (Locality) ────────────────────────────────────────
+function showLocPanel(loc) {
+  document.getElementById('ip-type').textContent = (loc.type||'place').toUpperCase();
+  document.getElementById('ip-name').textContent = loc.name;
+  document.getElementById('ip-score-wrap').style.display = 'none';
+  document.getElementById('ip-coords').textContent = `${loc.lat.toFixed(4)}°N ${loc.lng.toFixed(4)}°E`;
+  document.getElementById('ip-kind').textContent   = loc.type || 'place';
+  document.getElementById('ip-district').textContent = selDistrict?.districtName || '—';
+  document.getElementById('ip-state').textContent    = selState || '—';
+  document.getElementById('info-panel').classList.add('show');
+}
+
+function closePanel() {
+  document.getElementById('info-panel').classList.remove('show');
+}
+
+// ─── LAYER SWITCH ─────────────────────────────────────────────────
+function setLayer(type) {
+  map.removeLayer(activeLayer);
+  document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('on'));
+  activeLayer = layers[type];
+  activeLayer.addTo(map);
+  document.getElementById('btn-'+type).classList.add('on');
+}
+
+// ─── ZOOM CHIP ────────────────────────────────────────────────────
+function updateZoomChip() {
+  const z = map.getZoom();
+  document.getElementById('z-num').textContent = z;
+  const hint = z<=4?'World View':z<=6?'India Overview':z<=8?'State Level':z<=10?'District Level':z<=13?'City Level':'Locality Level';
+  document.getElementById('z-hint').textContent = hint;
+}
+
+// ─── BREADCRUMB ───────────────────────────────────────────────────
+function setCrumb(state, dist, city) {
+  let parts = ['<em>INDIA</em>'];
+  if (state) parts.push(`<em>${state}</em>`);
+  if (dist)  parts.push(`<em>${dist}</em>`);
+  if (city)  parts.push(`<em>${city}</em>`);
+  document.getElementById('crumb').innerHTML = '📍 ' + parts.join(' → ');
+}
+
+// ─── ACCORDION ───────────────────────────────────────────────────
+function toggleStep(id) { document.getElementById('step-'+id).classList.toggle('open'); }
+function openStep(id)   { document.getElementById('step-'+id).classList.add('open'); }
+
+// ─── FILTER ───────────────────────────────────────────────────────
+function filterList(type) {
+  const q = document.getElementById(type+'-search').value.toLowerCase();
+  const prefix = type==='state'?'st-':type==='dist'?'dt-':'cy-';
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ─── HIGHLIGHT ────────────────────────────────────────────────────
+function allHighlight(prefix, name, fn) {
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(e => e.classList.remove('selected'));
+  const el = document.getElementById(prefix + fn(name));
+  if (el) el.classList.add('selected');
+}
+
+// ─── GPS ──────────────────────────────────────────────────────────
+function locateMe() {
+  const btn = document.getElementById('gps-btn');
+  const txt = document.getElementById('gps-text');
+  btn.textContent = '⏳ Locating…'; btn.disabled = true;
+  if (!navigator.geolocation) { txt.textContent='GPS not supported.'; btn.textContent='📍 Locate Me'; btn.disabled=false; return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const {latitude:lat, longitude:lng, accuracy:acc} = pos.coords;
+      txt.innerHTML = `Lat: <b style="color:var(--green)">${lat.toFixed(5)}° N</b><br>Lng: <b style="color:var(--green)">${lng.toFixed(5)}° E</b><br>Accuracy: ±${Math.round(acc)}m`;
+      btn.textContent = '📍 Locate Me'; btn.disabled = false;
+      if (gpsM) map.removeLayer(gpsM);
+      gpsM = L.marker([lat, lng], {
+        icon: L.divIcon({className:'', html:`<div class="gps-dot-marker"></div>`, iconSize:[14,14], iconAnchor:[7,7]}),
+        zIndexOffset: 1000
+      }).addTo(map);
+      gpsM.bindPopup(`<b>📍 My Location</b><br>${lat.toFixed(5)}°N, ${lng.toFixed(5)}°E`).openPopup();
+      map.flyTo([lat, lng], 12, {duration:1.4});
+    },
+    err => {
+      const m={1:'Permission denied.',2:'Position unavailable.',3:'Timed out.'};
+      txt.textContent = m[err.code]||'Error.';
+      btn.textContent = '📍 Locate Me'; btn.disabled = false;
+    },
+    {enableHighAccuracy:true, timeout:10000, maximumAge:0}
+  );
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────
+function esc(s){ return s.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'') }
+function clearMs(arr){ arr.forEach(m=>map.removeLayer(m)); arr.length=0; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+let _toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
