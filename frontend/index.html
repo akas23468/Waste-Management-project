@@ -453,7 +453,7 @@
                         <button onclick="showToast('Active Hotspot monitor coming soon!')" class="w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800">
                             <span>🔥</span> <span>Hotspots</span>
                         </button>
-                        <button onclick="showToast('Loading active complaints register...')" class="w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800">
+                        <button onclick="switchView('complaints')" id="nav-complaints" class="w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800">
                             <span>💬</span> <span>Complaints</span>
                         </button>
                         <button onclick="showToast('Truck routing map loading...')" class="w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800">
@@ -547,8 +547,18 @@
                     </div>
                 </div>
 
-                <!-- 2B. VIEW TWO: ADVANCED INTERACTIVE LEAFLET MAP VIEW -->
-                <div id="view-map" class="hidden space-y-6">
+                <!-- 2B. VIEW TWO: MAP (loaded via iframe from map.html) -->
+                <div id="view-map" class="hidden" style="height:calc(100vh - 96px);margin:-24px;padding:0;">
+                    <iframe id="map-iframe" style="width:100%;height:100%;border:none;display:block;" allowfullscreen></iframe>
+                </div>
+
+                <!-- 2C. VIEW THREE: COMPLAINTS (loaded via iframe from complaints.html) -->
+                <div id="view-complaints" class="hidden" style="height:calc(100vh - 96px);margin:-24px;padding:0;">
+                    <iframe id="complaints-iframe" style="width:100%;height:100%;border:none;display:block;" allowfullscreen></iframe>
+                </div>
+
+                <!-- 2B-LEGACY. ORIGINAL MAP VIEW CONTENT (hidden, superceded by iframe) -->
+                <div id="view-map-legacy" class="hidden space-y-6">
                     <!-- Map Dashboard Header -->
                     <div class="bg-white p-6 rounded-3xl border border-emerald-100 shadow-sm">
                         <h2 class="text-xl font-extrabold text-gray-800">Smart Waste Management System - Map View</h2>
@@ -997,28 +1007,41 @@
             showToast("Logged out successfully.");
         }
 
-        // VIEW TOGGLING (Dashboard vs Map View)
+        // VIEW TOGGLING (Dashboard / Map / Complaints)
         function switchView(viewName) {
-            const dashboardPanel = document.getElementById('view-dashboard');
-            const mapPanel = document.getElementById('view-map');
-            const navDashboard = document.getElementById('nav-dashboard');
-            const navMap = document.getElementById('nav-map');
+            const views = ['dashboard', 'map', 'complaints'];
+            const navIds = { dashboard: 'nav-dashboard', map: 'nav-map', complaints: 'nav-complaints' };
+            const activeClass = "w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-white bg-mahaGreen-600 shadow-md";
+            const inactiveClass = "w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800";
 
-            if (viewName === 'dashboard') {
-                dashboardPanel.classList.remove('hidden');
-                mapPanel.classList.add('hidden');
-                navDashboard.className = "w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-white bg-mahaGreen-600 shadow-md";
-                navMap.className = "w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800";
-            } else {
-                mapPanel.classList.remove('hidden');
-                dashboardPanel.classList.add('hidden');
-                navMap.className = "w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-white bg-mahaGreen-600 shadow-md";
-                navDashboard.className = "w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white hover:bg-slate-800";
-                
-                // Refresh map sizing since it was hidden
-                setTimeout(() => {
-                    if (map) map.invalidateSize();
-                }, 100);
+            // Hide all views, reset all nav buttons
+            views.forEach(v => {
+                const el = document.getElementById('view-' + v);
+                if (el) el.classList.add('hidden');
+                const nav = document.getElementById(navIds[v]);
+                if (nav) nav.className = inactiveClass;
+            });
+
+            // Show requested view and activate its nav button
+            const target = document.getElementById('view-' + viewName);
+            if (target) target.classList.remove('hidden');
+            const navBtn = document.getElementById(navIds[viewName]);
+            if (navBtn) navBtn.className = activeClass;
+
+            // Lazy-load iframes: set src only once when first activated
+            if (viewName === 'map') {
+                const iframe = document.getElementById('map-iframe');
+                if (iframe && !iframe.dataset.loaded) {
+                    iframe.src = 'map.html';
+                    iframe.dataset.loaded = 'true';
+                }
+            }
+            if (viewName === 'complaints') {
+                const iframe = document.getElementById('complaints-iframe');
+                if (iframe && !iframe.dataset.loaded) {
+                    iframe.src = 'complaints.html';
+                    iframe.dataset.loaded = 'true';
+                }
             }
         }
 

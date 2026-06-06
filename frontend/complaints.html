@@ -41,23 +41,25 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 .nav-right{display:flex;align-items:center;gap:10px;margin-left:16px;}
 .nav-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#059669);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;}
 
-/* ── LAYOUT ── */
-.main-wrap{display:flex;height:calc(100vh - 54px);overflow:hidden;}
-.sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:12px 0;flex-shrink:0;overflow-y:auto;}
-.sidebar a{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);text-decoration:none;border-left:3px solid transparent;transition:.15s;}
-.sidebar a:hover{background:var(--surface2);color:var(--text);}
-.sidebar a.active{background:var(--accent-glow);color:var(--accent);border-left-color:var(--accent);}
-.sidebar .zone-card{margin:12px 10px 0;background:var(--surface2);border-radius:var(--radius);padding:10px;border:1px solid var(--border);}
-.zone-score{width:56px;height:56px;border-radius:50%;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-direction:column;margin:8px auto;}
-.zone-score b{font-size:18px;font-weight:700;color:var(--accent);}
-.zone-score small{font-size:8px;color:var(--text2);}
+/* ── CITIZEN SCORE CARD ── */
+.citizen-score-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:16px;}
+.score-circle{width:52px;height:52px;border-radius:50%;border:3px solid var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.score-circle b{font-size:16px;font-weight:700;color:var(--accent);line-height:1;}
+.score-circle small{font-size:8px;color:var(--text3);}
+.score-info{flex:1;}
+.score-info .rank{font-size:12px;color:var(--text2);}
+.score-info .rank b{color:var(--yellow);}
+.score-badges{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.badge-pill{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);}
+.upload-score-bar{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 12px;}
+.upload-score-bar .pts{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);}
+.upload-score-bar .pts-label{font-size:11px;color:var(--text3);}
+.score-flash{animation:scoreFlash .6s ease;}
+@keyframes scoreFlash{0%{color:var(--accent);transform:scale(1.3);}100%{color:var(--accent);transform:scale(1);}}
 
-/* ── CONTENT AREA ── */
-.content{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-.content-header{padding:14px 20px 0;display:flex;align-items:center;gap:10px;}
-.content-header h1{font-size:17px;font-weight:600;}
-.content-header p{font-size:12px;color:var(--text2);}
-.panels{flex:1;display:grid;grid-template-columns:380px 1fr;overflow:hidden;}
+/* ── LAYOUT ── */
+.main-wrap{display:flex;height:calc(100vh - 54px - 74px);overflow:hidden;}
+.panels{flex:1;display:grid;grid-template-columns:380px 1fr;overflow:hidden;height:100%;}
 
 /* ── LEFT PANEL ── */
 .left-panel{border-right:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;}
@@ -73,6 +75,10 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 .change-photo-btn{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:5px;}
 .change-photo-btn:hover{background:var(--accent);color:#000;}
 #photo-input{display:none;}
+
+/* Upload score indicator */
+.upload-score-hint{display:none;align-items:center;gap:6px;padding:6px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;font-size:12px;color:var(--accent);margin-top:6px;}
+.upload-score-hint.visible{display:flex;}
 
 /* Form controls */
 .form-group{display:flex;flex-direction:column;gap:5px;}
@@ -90,13 +96,13 @@ textarea{resize:none;min-height:80px;}
 .priority-pill.active{border-color:currentColor;background:color-mix(in srgb,currentColor 15%,transparent);}
 .p-low{color:#22c55e;}.p-medium{color:#eab308;}.p-high{color:#f97316;}.p-emergency{color:#ef4444;}
 
-/* GPS */
+/* GPS / Address */
 .gps-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:9px 11px;}
 .gps-icon{width:30px;height:30px;border-radius:6px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .gps-text{flex:1;min-width:0;}
 .gps-text p{font-size:11px;color:var(--text2);}
-.gps-text b{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--accent);}
-.gps-refresh{cursor:pointer;color:var(--text3);transition:.15s;}
+.gps-text b{font-size:12px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+.gps-refresh{cursor:pointer;color:var(--text3);transition:.15s;flex-shrink:0;}
 .gps-refresh:hover{color:var(--accent);}
 
 /* Zone ID display */
@@ -110,8 +116,6 @@ textarea{resize:none;min-height:80px;}
 .ai-analyse-btn:active{transform:translateY(0);}
 .ai-analyse-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;background:var(--surface2);border-color:var(--border2);color:var(--text3);}
 .ai-btn-hint{font-size:10px;font-weight:400;opacity:.7;margin-left:4px;}
-.ai-analyse-btn:disabled .ai-btn-hint{display:inline;}
-.ai-analyse-btn:not(:disabled) .ai-btn-hint{display:none;}
 
 /* Submit btn */
 .submit-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:var(--radius2);color:#000;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;letter-spacing:.02em;}
@@ -185,6 +189,13 @@ textarea{resize:none;min-height:80px;}
 .ba-card .upload-after{height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text3);font-size:12px;cursor:pointer;border:2px dashed var(--border2);border-radius:8px;margin:6px;transition:.2s;}
 .ba-card .upload-after:hover{border-color:var(--accent);color:var(--accent);}
 
+/* Complaint info in track sheet */
+.complaint-meta-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--radius);padding:8px 12px;margin-top:8px;}
+.complaint-meta-row .meta-date{font-size:11px;color:var(--text2);}
+.complaint-meta-row .meta-status{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;}
+.status-resolved{background:rgba(34,197,94,.15);color:var(--accent);}
+.status-pending{background:rgba(234,179,8,.12);color:var(--yellow);}
+
 /* Feedback */
 .feedback-section{margin-top:16px;}
 .stars{display:flex;gap:4px;margin:8px 0;}
@@ -228,6 +239,10 @@ textarea{resize:none;min-height:80px;}
 .zone-hover-info .zh-id{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--blue);}
 .zone-hover-info .zh-size{font-size:11px;color:var(--text3);margin-top:2px;}
 
+/* Score animation */
+@keyframes popIn{0%{transform:scale(0.8);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+.pop-in{animation:popIn .4s ease;}
+
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:9px;}
@@ -241,9 +256,10 @@ textarea{resize:none;min-height:80px;}
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
     SMART WASTE
   </div>
-  <div class="nav-breadcrumb">
+  <!-- Breadcrumb: fetched dynamically from GPS -->
+  <div class="nav-breadcrumb" id="nav-breadcrumb">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-    Maharashtra &rsaquo; <span id="nav-district">Palghar</span> &rsaquo; <span id="nav-city">Jambhe</span>
+    <span id="nav-location-text">Detecting location…</span>
   </div>
   <div class="nav-right">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
@@ -252,45 +268,42 @@ textarea{resize:none;min-height:80px;}
   </div>
 </nav>
 
+<!-- ── CITIZEN SCORE BAR ── -->
+<div class="citizen-score-bar">
+  <div class="score-circle">
+    <b id="citizen-score-val">145</b>
+    <small>pts</small>
+  </div>
+  <div class="score-info">
+    <div class="rank">Rank <b id="citizen-rank">#12</b> in <span id="citizen-rank-area">your area</span></div>
+    <div class="score-badges">
+      <div class="badge-pill">🏆 Clean City Hero</div>
+      <div class="badge-pill">🥈 Active Reporter</div>
+    </div>
+  </div>
+  <!-- Upload score counter -->
+  <div class="upload-score-bar" id="upload-score-bar">
+    <svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <div>
+      <div class="pts" id="upload-pts-display">+0 pts</div>
+      <div class="pts-label">this session</div>
+    </div>
+  </div>
+</div>
+
 <div class="main-wrap">
-  <!-- ── SIDEBAR (only Dashboard + Raise Complaint) ── -->
-  <aside class="sidebar">
-    <a href="#"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Dashboard</a>
-    <a href="#" class="active"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg> Raise Complaint</a>
-
-    <div class="zone-card">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;text-align:center">Your Zone</div>
-      <div style="font-size:11px;font-weight:600;text-align:center;margin:4px 0 2px">Jambhe – A12</div>
-      <div class="zone-score"><b>72</b><small>/100</small></div>
-      <div style="font-size:10px;text-align:center;color:var(--accent);font-weight:600">Good</div>
-      <div style="font-size:10px;text-align:center;color:var(--text3);margin-top:2px">Rank 5<sup>th</sup> / 128 Zones</div>
-
-      <!-- Zone ID info -->
-      <div style="margin-top:10px;padding:8px;background:var(--surface);border-radius:8px;border:1px solid var(--border2);">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Zone ID Formula</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);">MH-PAL-A001</div>
-        <div style="font-size:9px;color:var(--text3);margin-top:3px;">5km × 5km = 25km²</div>
-        <div style="font-size:9px;color:var(--text3);">~131,490 zones India</div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── MAIN CONTENT ── -->
-  <div class="content">
-    <div class="content-header">
-      <div>
-        <h1>Report Waste / Complaint</h1>
-        <p>Help keep our city clean · AI-powered analysis · Auto Zone ID assignment</p>
-      </div>
-    </div>
-
+  <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
     <div class="panels">
       <!-- LEFT FORM PANEL -->
       <div class="left-panel">
+        <div style="padding:2px 0 6px;">
+          <div style="font-size:16px;font-weight:600;">Report Waste / Complaint</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">AI-powered analysis · Auto Zone ID · +10 pts per photo upload</div>
+        </div>
 
         <!-- 1. Photo Upload -->
         <div>
-          <div class="section-label"><b>1.</b> Upload Photo</div>
+          <div class="section-label"><b>1.</b> Upload Photo <span style="color:var(--accent);font-size:10px;margin-left:4px;">+10 pts</span></div>
           <div class="photo-upload-box" id="upload-box" onclick="document.getElementById('photo-input').click()">
             <img id="photo-preview" class="photo-preview" alt="preview"/>
             <div class="photo-placeholder" id="photo-placeholder">
@@ -304,6 +317,11 @@ textarea{resize:none;min-height:80px;}
             </button>
           </div>
           <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(event)"/>
+          <!-- Score hint after upload -->
+          <div class="upload-score-hint" id="upload-score-hint">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>+10 pts added for uploading a photo!</span>
+          </div>
         </div>
 
         <!-- 2. Category -->
@@ -341,16 +359,16 @@ textarea{resize:none;min-height:80px;}
           </div>
         </div>
 
-        <!-- 5. Location + Zone ID -->
+        <!-- 5. Location (address) + Zone ID -->
         <div class="form-group">
-          <label><b>5.</b> Auto Location (GPS) + Zone ID</label>
+          <label><b>5.</b> Location (Auto Address) + Zone ID</label>
           <div class="gps-row">
             <div class="gps-icon">
-              <svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/></svg>
+              <svg width="14" height="14" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
             </div>
             <div class="gps-text">
-              <p>GPS Coordinates</p>
-              <b id="gps-coords">Fetching location…</b>
+              <p>Current Address</p>
+              <b id="gps-address">Fetching address…</b>
             </div>
             <div class="gps-refresh" onclick="getLocation()" title="Refresh location">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -360,7 +378,7 @@ textarea{resize:none;min-height:80px;}
           <div class="zone-id-row" style="margin-top:6px;">
             <svg width="14" height="14" fill="none" stroke="var(--blue)" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
             <div style="flex:1">
-              <div class="zone-id-info">Assigned Zone (5×5 km grid)</div>
+              <div class="zone-id-info">Your Zone (5×5 km grid · from GPS)</div>
               <div class="zone-id-badge" id="zone-id-display">Calculating…</div>
             </div>
             <div style="font-size:10px;color:var(--text3);text-align:right;">25 km²<br>per zone</div>
@@ -378,13 +396,11 @@ textarea{resize:none;min-height:80px;}
         <div class="ai-box" id="ai-box">
           <div class="ai-header">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <span style="font-size:13px;font-weight:700;color:var(--purple)">Gemini AI Analysis</span>
-            <div id="ai-loading" class="ai-loader" style="margin-left:auto;display:none"><div class="spinner"></div> Calling Gemini…</div>
+            <span style="font-size:13px;font-weight:700;color:var(--purple)">Groq AI Analysis</span>
+            <div id="ai-loading" class="ai-loader" style="margin-left:auto;display:none"><div class="spinner"></div> Calling Groq…</div>
             <button id="ai-rerun-btn" onclick="triggerAIAnalysis()" style="display:none;margin-left:auto;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;">↺ Re-run</button>
           </div>
-          <!-- Error state -->
           <div id="ai-error" style="display:none;padding:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;font-size:12px;color:var(--red);line-height:1.6;"></div>
-          <!-- Result -->
           <div id="ai-content" style="display:none">
             <div class="ai-grid">
               <div class="ai-cell"><div class="label">Waste Type</div><div class="val" id="ai-type">—</div></div>
@@ -446,7 +462,7 @@ textarea{resize:none;min-height:80px;}
         <div class="map-toolbar">
           <button class="map-tab active" onclick="switchMapTab('map',this)">Map View</button>
           <button class="map-tab" onclick="switchMapTab('satellite',this)">Satellite</button>
-          <button class="map-tab" onclick="switchMapTab('zones',this)" id="zones-tab">Zone Grid</button>
+          <button class="map-tab" onclick="switchMapTab('zones',this)">Zone Grid</button>
           <div class="map-legend">
             <div style="display:flex;align-items:center;gap:4px"><div class="legend-dot" style="background:#22c55e"></div><span class="legend-label">Clean</span></div>
             <div style="display:flex;align-items:center;gap:4px"><div class="legend-dot" style="background:#eab308"></div><span class="legend-label">Moderate</span></div>
@@ -456,7 +472,6 @@ textarea{resize:none;min-height:80px;}
           </div>
         </div>
         <div id="map"></div>
-        <!-- Zone hover info -->
         <div class="zone-hover-info" id="zone-hover-info">
           <div class="zh-id" id="zh-id">—</div>
           <div class="zh-size">5 km × 5 km · 25 km²</div>
@@ -488,6 +503,12 @@ textarea{resize:none;min-height:80px;}
         <h2>Track Your Complaint</h2>
         <div class="cid" id="track-cid">—</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);margin-top:2px;" id="track-zone">—</div>
+        <!-- Complaint meta: date + status -->
+        <div class="complaint-meta-row" id="complaint-meta-row">
+          <svg width="12" height="12" fill="none" stroke="var(--text3)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span class="meta-date" id="track-reported-date">Reported: —</span>
+          <span class="meta-status" id="track-status-badge">Pending</span>
+        </div>
       </div>
       <button onclick="closeTrackSheet()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:5px 10px;color:var(--text2);cursor:pointer;font-family:inherit;">✕ Close</button>
     </div>
@@ -520,21 +541,28 @@ textarea{resize:none;min-height:80px;}
       </div>
     </div>
 
+    <!-- Before & After section -->
     <div class="ba-section">
       <div style="font-size:13px;font-weight:600;">Before &amp; After</div>
       <div class="ba-grid">
+        <!-- BEFORE: uploaded by citizen -->
         <div class="ba-card">
           <img id="ba-before-img" src="" alt="Before" style="display:none"/>
-          <div id="ba-before-placeholder" style="height:120px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--text3);font-size:12px;">No image yet</div>
-          <div class="ba-label" style="color:var(--red);">📸 Before</div>
+          <div id="ba-before-placeholder" style="height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface);color:var(--text3);font-size:11px;gap:4px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            No image yet
+          </div>
+          <div class="ba-label" style="color:var(--red);">📸 Before (Citizen)</div>
         </div>
+        <!-- AFTER: uploaded by admin/authority -->
         <div class="ba-card">
           <img id="ba-after-img" src="" alt="After" style="display:none"/>
           <div class="upload-after" id="ba-after-placeholder" onclick="document.getElementById('after-upload-input').click()">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Authority: Upload After
+            <span>Authority: Upload After</span>
+            <span style="font-size:10px;color:var(--text3);">Post-cleaning photo</span>
           </div>
-          <div class="ba-label" style="color:var(--accent);">✅ After</div>
+          <div class="ba-label" style="color:var(--accent);">✅ After (Authority)</div>
           <input type="file" id="after-upload-input" accept="image/*" style="display:none" onchange="handleAfterUpload(event)"/>
         </div>
       </div>
@@ -560,10 +588,6 @@ textarea{resize:none;min-height:80px;}
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// CONFIG — set your Gemini key in server.js via /api/gemini-key
-// or paste directly here for local testing:
-// ══════════════════════════════════════════════════════════
 const API_BASE = 'http://localhost:8000';
 
 // ── STATE ──
@@ -573,24 +597,42 @@ let currentTileLayer = null, zoneLayerGroup = null;
 let complaintId = null, photoBase64 = null, currentPhotoSrc = null, currentZoneId = '';
 const COMPLAINTS_KEY = 'swm_complaints';
 
-// ══════════════════════════════════════════════════════════
-// ZONE ID SYSTEM
-// Formula: 5km × 5km = 25km² per zone
-// India: ~3,287,263 km² → ~131,490 zones
-// Zone ID: <STATE_CODE>-<DIST_CODE>-<ALPHA><NUM3>
-// e.g., MH-PAL-A001
-//
-// Grid origin: India SW corner ≈ lat 6.5°N, lng 68.0°E
-// 1 degree lat ≈ 111 km  → 5km = 0.04505°
-// 1 degree lng ≈ varies (use 0.04505° approx uniform grid)
-// ══════════════════════════════════════════════════════════
+// ── CITIZEN SCORE ──
+let citizenScore = 145;
+let sessionUploadPts = 0;
+let uploadCount = 0;
+
+function addUploadPoints() {
+  const pts = 10;
+  sessionUploadPts += pts;
+  citizenScore += pts;
+  uploadCount++;
+
+  // Animate score
+  const scoreEl = document.getElementById('citizen-score-val');
+  scoreEl.textContent = citizenScore;
+  scoreEl.classList.remove('score-flash');
+  void scoreEl.offsetWidth;
+  scoreEl.classList.add('score-flash');
+
+  // Update session pts
+  document.getElementById('upload-pts-display').textContent = '+' + sessionUploadPts + ' pts';
+  document.getElementById('upload-pts-display').classList.remove('pop-in');
+  void document.getElementById('upload-pts-display').offsetWidth;
+  document.getElementById('upload-pts-display').classList.add('pop-in');
+
+  // Update rank area to reflect current GPS area
+  document.getElementById('citizen-rank-area').textContent = currentAreaName || 'your area';
+
+  showToast('+10 pts for uploading a photo! 🎉');
+}
+
+// ── ZONE ID SYSTEM ──
 const ZONE_ORIGIN_LAT = 6.5;
 const ZONE_ORIGIN_LNG = 68.0;
-const ZONE_DEG = 5 / 111.0; // 5 km in degrees ≈ 0.04505°
+const ZONE_DEG = 5 / 111.0;
 
-// State/District abbreviation mapping (sample)
 const STATE_MAP = {
-  // lat range → state code (approximate bounding box)
   MH: { latMin:15.6, latMax:22.1, lngMin:72.6, lngMax:80.9, code:'MH' },
   KA: { latMin:11.5, latMax:18.5, lngMin:74.0, lngMax:78.6, code:'KA' },
   TN: { latMin:8.0,  latMax:13.6, lngMin:76.2, lngMax:80.3, code:'TN' },
@@ -613,18 +655,15 @@ function getStateCode(lat, lng) {
   for (const [key, s] of Object.entries(STATE_MAP)) {
     if (lat >= s.latMin && lat <= s.latMax && lng >= s.lngMin && lng <= s.lngMax) return s.code;
   }
-  return 'IN'; // fallback
+  return 'IN';
 }
 
-// District code: 3-letter abbreviation from grid cell
 function getDistrictCode(lat, lng) {
-  // Use a simple hash of zone row/col to get repeatable 3-letter code
   const row = Math.floor((lat - ZONE_ORIGIN_LAT) / ZONE_DEG);
   const col = Math.floor((lng - ZONE_ORIGIN_LNG) / ZONE_DEG);
-  // Named districts for known areas
   const DISTRICT_NAMES = {
     'MH': {
-      near: [ // approximate district centers
+      near: [
         { name:'MUM', lat:19.07, lng:72.87 },
         { name:'PAL', lat:19.70, lng:72.77 },
         { name:'THA', lat:19.20, lng:73.00 },
@@ -646,7 +685,6 @@ function getDistrictCode(lat, lng) {
     }
     if (bestDist < 1.5) return best.name;
   }
-  // Generic: encode grid col as 3 letters
   const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const c1 = alpha[Math.floor(col / 676) % 26];
   const c2 = alpha[Math.floor(col / 26) % 26];
@@ -657,31 +695,69 @@ function getDistrictCode(lat, lng) {
 function computeZoneId(lat, lng) {
   const stateCode = getStateCode(lat, lng);
   const distCode  = getDistrictCode(lat, lng);
-  // Zone serial within district-ish area: row within state
   const row = Math.floor((lat - ZONE_ORIGIN_LAT) / ZONE_DEG);
   const col = Math.floor((lng - ZONE_ORIGIN_LNG) / ZONE_DEG);
-  // Encode row as letter + 3-digit number
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const letterIdx = Math.floor(row / 1000) % 26;
   const num = String((row * 31 + col) % 999 + 1).padStart(3, '0');
   return `${stateCode}-${distCode}-${letters[letterIdx]}${num}`;
 }
 
-function getZoneBounds(lat, lng) {
-  const row = Math.floor((lat - ZONE_ORIGIN_LAT) / ZONE_DEG);
-  const col = Math.floor((lng - ZONE_ORIGIN_LNG) / ZONE_DEG);
-  const swLat = ZONE_ORIGIN_LAT + row * ZONE_DEG;
-  const swLng = ZONE_ORIGIN_LNG + col * ZONE_DEG;
-  return {
-    sw: [swLat, swLng],
-    ne: [swLat + ZONE_DEG, swLng + ZONE_DEG],
-    center: [swLat + ZONE_DEG/2, swLng + ZONE_DEG/2]
-  };
+// ── REVERSE GEOCODE via Nominatim ──
+let currentAreaName = '';
+let geocodeTimeout = null;
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=14&addressdetails=1`;
+    const resp = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const data = await resp.json();
+    const addr = data.address || {};
+    // Build a readable address: neighbourhood/suburb, city/town, state
+    const parts = [];
+    if (addr.neighbourhood || addr.suburb || addr.village || addr.quarter) {
+      parts.push(addr.neighbourhood || addr.suburb || addr.village || addr.quarter);
+    }
+    if (addr.city || addr.town || addr.county) {
+      parts.push(addr.city || addr.town || addr.county);
+    }
+    if (addr.state) parts.push(addr.state);
+    const addressStr = parts.length > 0 ? parts.join(', ') : data.display_name?.split(',').slice(0,3).join(',').trim() || 'Unknown location';
+    return { addressStr, addr };
+  } catch(e) {
+    return { addressStr: `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`, addr: {} };
+  }
 }
 
-// ══════════════════════════════════════════════════════════
-// MAP INIT
-// ══════════════════════════════════════════════════════════
+async function updateLocationDisplay() {
+  document.getElementById('gps-address').textContent = 'Getting address…';
+  document.getElementById('zone-id-display').textContent = 'Calculating…';
+
+  const { addressStr, addr } = await reverseGeocode(currentLat, currentLng);
+  currentAreaName = addr.city || addr.town || addr.county || addr.state || '';
+
+  // Update address in form
+  document.getElementById('gps-address').textContent = addressStr;
+
+  // Update zone id
+  currentZoneId = computeZoneId(currentLat, currentLng);
+  document.getElementById('zone-id-display').textContent = currentZoneId;
+
+  // Update nav breadcrumb from actual GPS location
+  const stateName = addr.state || '';
+  const districtName = addr.county || addr.state_district || '';
+  const cityName = addr.city || addr.town || addr.village || addr.suburb || '';
+  let breadcrumb = stateName;
+  if (districtName && districtName !== stateName) breadcrumb += ' › <span style="color:var(--accent)">' + districtName + '</span>';
+  if (cityName) breadcrumb += ' › <span style="color:var(--accent)">' + cityName + '</span>';
+  if (!breadcrumb) breadcrumb = '<span style="color:var(--accent)">' + addressStr + '</span>';
+  document.getElementById('nav-location-text').innerHTML = breadcrumb;
+
+  // Update citizen rank area
+  document.getElementById('citizen-rank-area').textContent = districtName || stateName || 'your area';
+}
+
+// ── MAP INIT ──
 function initMap() {
   mapInstance = L.map('map', { zoomControl: false }).setView([currentLat, currentLng], 11);
   L.control.zoom({ position: 'bottomright' }).addTo(mapInstance);
@@ -698,7 +774,7 @@ function initMap() {
 
   mapInstance.on('click', function(e) {
     currentLat = e.latlng.lat; currentLng = e.latlng.lng;
-    updateGpsDisplay();
+    updateLocationDisplay();
     placeComplaintMarker(currentLat, currentLng, currentPriority);
   });
 
@@ -710,22 +786,11 @@ function initMap() {
   });
 }
 
-function updateGpsDisplay() {
-  document.getElementById('gps-coords').textContent = `${currentLat.toFixed(4)}° N, ${currentLng.toFixed(4)}° E`;
-  currentZoneId = computeZoneId(currentLat, currentLng);
-  document.getElementById('zone-id-display').textContent = currentZoneId;
-}
-
-// ── Zone grid rendering (visible 5×5 km squares near current view) ──
 function renderZoneGrid(centerLat, centerLng, zoom) {
   zoneLayerGroup.clearLayers();
-
-  // How many zones to show depends on zoom
   const spread = zoom >= 13 ? 3 : zoom >= 11 ? 6 : 10;
-
   const centerRow = Math.floor((centerLat - ZONE_ORIGIN_LAT) / ZONE_DEG);
   const centerCol = Math.floor((centerLng - ZONE_ORIGIN_LNG) / ZONE_DEG);
-
   const ZONE_COLORS = ['#22c55e','#eab308','#f97316','#ef4444'];
   const sevLabels   = ['Clean','Moderate','Dirty','Critical'];
 
@@ -734,26 +799,19 @@ function renderZoneGrid(centerLat, centerLng, zoom) {
       const row = centerRow + dr;
       const col = centerCol + dc;
       if (row < 0 || col < 0) continue;
-
       const swLat = ZONE_ORIGIN_LAT + row * ZONE_DEG;
       const swLng = ZONE_ORIGIN_LNG + col * ZONE_DEG;
-      const neLat = swLat + ZONE_DEG;
-      const neLng = swLng + ZONE_DEG;
       const cLat  = swLat + ZONE_DEG / 2;
       const cLng  = swLng + ZONE_DEG / 2;
-
       const stateCode = getStateCode(cLat, cLng);
       const distCode  = getDistrictCode(cLat, cLng);
       const letters   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       const letterIdx = Math.floor(row / 1000) % 26;
       const num       = String((row * 31 + col) % 999 + 1).padStart(3, '0');
       const zoneId    = `${stateCode}-${distCode}-${letters[letterIdx]}${num}`;
+      const sevIdx    = (row * 7 + col * 13) % 4;
+      const color     = ZONE_COLORS[sevIdx];
 
-      // Deterministic "cleanliness" colour per zone
-      const sevIdx = (row * 7 + col * 13) % 4;
-      const color  = ZONE_COLORS[sevIdx];
-
-      // Draw as a circle centred on the zone (radius = ~half of 5 km = 2500 m)
       const circle = L.circle([cLat, cLng], {
         radius: 2500,
         color, fillColor: color, fillOpacity: 0.10, weight: 1.2, opacity: 0.55
@@ -767,18 +825,15 @@ function renderZoneGrid(centerLat, centerLng, zoom) {
       </div>`, { maxWidth:220 });
 
       circle.on('mouseover', function() {
-        const el = document.getElementById('zone-hover-info');
         document.getElementById('zh-id').textContent    = zoneId;
         document.getElementById('zh-coords').textContent = `${cLat.toFixed(3)}°N, ${cLng.toFixed(3)}°E`;
-        el.classList.add('visible');
+        document.getElementById('zone-hover-info').classList.add('visible');
       });
       circle.on('mouseout', function() {
         document.getElementById('zone-hover-info').classList.remove('visible');
       });
-
       zoneLayerGroup.addLayer(circle);
 
-      // Add label at higher zoom
       if (zoom >= 12) {
         const label = L.divIcon({
           html: `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${color};background:rgba(11,15,26,.8);padding:2px 5px;border-radius:4px;border:1px solid ${color}44;white-space:nowrap;">${zoneId}</div>`,
@@ -829,7 +884,7 @@ function placeComplaintMarker(lat, lng, priority) {
   complaintMarker.on('dragend', function(e){
     currentLat = e.target.getLatLng().lat;
     currentLng = e.target.getLatLng().lng;
-    updateGpsDisplay();
+    updateLocationDisplay();
   });
   mapInstance.panTo([lat, lng]);
 }
@@ -852,19 +907,18 @@ function switchMapTab(type, btn) {
 
 // ── GPS ──
 function getLocation() {
-  document.getElementById('gps-coords').textContent = 'Fetching location…';
+  document.getElementById('gps-address').textContent = 'Fetching location…';
   if (!navigator.geolocation) {
-    document.getElementById('gps-coords').textContent = 'Not supported';
-    updateGpsDisplay(); return;
+    updateLocationDisplay(); return;
   }
   navigator.geolocation.getCurrentPosition(pos => {
     currentLat = pos.coords.latitude;
     currentLng = pos.coords.longitude;
-    updateGpsDisplay();
+    updateLocationDisplay();
     placeComplaintMarker(currentLat, currentLng, currentPriority);
     mapInstance.setView([currentLat, currentLng], 13);
   }, () => {
-    updateGpsDisplay();
+    updateLocationDisplay();
   });
 }
 
@@ -879,7 +933,7 @@ function setPriority(p) {
   document.getElementById('resolution-time').textContent = times[p];
 }
 
-// ── PHOTO UPLOAD — just store, enable the AI button, do NOT auto-analyse ──
+// ── PHOTO UPLOAD — adds +10 pts each time ──
 function handlePhotoUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -891,7 +945,7 @@ function handlePhotoUpload(e) {
     document.getElementById('photo-preview').style.display = 'block';
     document.getElementById('photo-placeholder').style.display = 'none';
     document.getElementById('change-photo-btn').style.display = 'flex';
-    // Enable the AI analysis button now that we have a photo
+    // Enable the AI analysis button
     const btn = document.getElementById('ai-analyse-btn');
     btn.disabled = false;
     document.getElementById('ai-btn-hint').textContent = '';
@@ -900,22 +954,18 @@ function handlePhotoUpload(e) {
     document.getElementById('ai-content').style.display = 'none';
     document.getElementById('ai-error').style.display = 'none';
     document.getElementById('resolution-badge').style.display = 'none';
+    // Show score hint
+    document.getElementById('upload-score-hint').classList.add('visible');
+    // Add +10 pts
+    addUploadPoints();
   };
   reader.readAsDataURL(file);
 }
 
-// ══════════════════════════════════════════════════════════
-// GROQ AI ANALYSIS — real API only, no static fallback
-// Frontend calls POST /api/ai-analyse on your server
-// Server holds the GROQ_API_KEY securely in .env
-// Model: meta-llama/llama-4-scout-17b-16e-instruct (vision)
-// ══════════════════════════════════════════════════════════
-
-// Called by the "Run AI Analysis" button
+// ── AI ANALYSIS ──
 async function triggerAIAnalysis() {
   if (!photoBase64 || !currentPhotoSrc) {
-    showToast('Please upload a photo first', true);
-    return;
+    showToast('Please upload a photo first', true); return;
   }
   await runGroqAnalysis(currentPhotoSrc);
 }
@@ -928,7 +978,6 @@ async function runGroqAnalysis(imageSrc) {
   const rerun      = document.getElementById('ai-rerun-btn');
   const analyseBtn = document.getElementById('ai-analyse-btn');
 
-  // Show box, spinner, hide previous state
   box.classList.add('visible');
   loading.style.display = 'flex';
   content.style.display = 'none';
@@ -944,37 +993,22 @@ async function runGroqAnalysis(imageSrc) {
   const base64      = imageSrc.split(',')[1];
 
   try {
-    // POST to your own server — server holds the Groq key, never exposed to browser
     const response = await fetch(`${API_BASE}/api/ai-analyse`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64: base64,
-        category,
-        description,
-        priority: currentPriority,
-        zoneId
-      })
+      body: JSON.stringify({ imageBase64: base64, category, description, priority: currentPriority, zoneId })
     });
-
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || data.error || `Server error ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(data.detail || data.error || `Server error ${response.status}`);
     if (!data.result) throw new Error('Server returned no result. Please try again.');
-
-    // ── Success ──
     displayAIResult(data.result);
     loading.style.display = 'none';
     rerun.style.display   = 'block';
     analyseBtn.disabled   = false;
     analyseBtn.innerHTML  = `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Analysis Complete`;
-    analyseBtn.style.background   = 'linear-gradient(135deg,#14532d,#16a34a)';
-    analyseBtn.style.borderColor  = '#22c55e';
-    analyseBtn.style.color        = '#bbf7d0';
-
+    analyseBtn.style.background  = 'linear-gradient(135deg,#14532d,#16a34a)';
+    analyseBtn.style.borderColor = '#22c55e';
+    analyseBtn.style.color       = '#bbf7d0';
   } catch (err) {
     showAIError(`❌ ${err.message}`, analyseBtn);
   }
@@ -986,37 +1020,30 @@ function showAIError(htmlMsg, analyseBtn) {
   errEl.style.display = 'block';
   errEl.innerHTML     = htmlMsg.replace(/\n/g, '<br>');
   document.getElementById('ai-rerun-btn').style.display = 'block';
-
   analyseBtn.disabled  = false;
   analyseBtn.innerHTML = `<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Retry AI Analysis`;
-  analyseBtn.style.background  = '';
-  analyseBtn.style.borderColor = '';
-  analyseBtn.style.color       = '';
+  analyseBtn.style.background = analyseBtn.style.borderColor = analyseBtn.style.color = '';
 }
 
 function displayAIResult(result) {
-  document.getElementById('ai-type').textContent     = result.wasteType || 'Unknown';
+  document.getElementById('ai-type').textContent    = result.wasteType || 'Unknown';
   const sev = result.severity || 'Medium';
   const sevEl = document.getElementById('ai-severity');
   sevEl.textContent = sev;
   sevEl.className = `val severity-${sev.toLowerCase()}`;
-  document.getElementById('ai-impact').textContent   = result.cleanlinessImpact || '-15 Score';
-  document.getElementById('ai-action').textContent   = result.suggestedAction   || 'Urgent Cleaning Needed';
-  document.getElementById('ai-summary').textContent  = result.summary           || '';
-  document.getElementById('resolution-time').textContent = result.resolution    || 'Within 24 Hours';
+  document.getElementById('ai-impact').textContent  = result.cleanlinessImpact || '-15 Score';
+  document.getElementById('ai-action').textContent  = result.suggestedAction   || 'Urgent Cleaning Needed';
+  document.getElementById('ai-summary').textContent = result.summary           || '';
+  document.getElementById('resolution-time').textContent = result.resolution   || 'Within 24 Hours';
   document.getElementById('ai-loading').style.display = 'none';
   document.getElementById('ai-content').style.display = 'block';
   document.getElementById('resolution-badge').style.display = 'flex';
 }
 
-// ══════════════════════════════════════════════════════════
-// COMPLAINT ID GENERATION
-// Format: SWM-<YEAR>-<STATE>-<ZONE_SERIAL>-<6DIGIT_RANDOM>
-// Example: SWM-2026-MH-PAL-A001-483921
-// ══════════════════════════════════════════════════════════
+// ── COMPLAINT ID ──
 function generateComplaintId(zoneId) {
-  const year   = new Date().getFullYear();
-  const rand   = String(Math.floor(100000 + Math.random() * 900000));
+  const year = new Date().getFullYear();
+  const rand = String(Math.floor(100000 + Math.random() * 900000));
   return `SWM-${year}-${zoneId}-${rand}`;
 }
 
@@ -1036,71 +1063,52 @@ async function submitComplaint() {
   const cid         = generateComplaintId(zoneId);
   const submittedAt = now.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-  // Grab AI result if analysis was done
   const aiDone = document.getElementById('ai-content').style.display !== 'none';
   const aiResult = aiDone ? {
-    wasteType:          document.getElementById('ai-type').textContent,
-    severity:           document.getElementById('ai-severity').textContent,
-    cleanlinessImpact:  document.getElementById('ai-impact').textContent,
-    suggestedAction:    document.getElementById('ai-action').textContent,
-    resolution:         document.getElementById('resolution-time').textContent,
-    summary:            document.getElementById('ai-summary').textContent,
+    wasteType:         document.getElementById('ai-type').textContent,
+    severity:          document.getElementById('ai-severity').textContent,
+    cleanlinessImpact: document.getElementById('ai-impact').textContent,
+    suggestedAction:   document.getElementById('ai-action').textContent,
+    resolution:        document.getElementById('resolution-time').textContent,
+    summary:           document.getElementById('ai-summary').textContent,
   } : null;
 
   const complaint = {
-    id:          cid,
-    zoneId,
-    category,
-    description,
-    priority:    currentPriority,
-    lat:         currentLat,
-    lng:         currentLng,
-    photo:       photoBase64 ? `data:image/jpeg;base64,${photoBase64}` : null,
-    status:      'submitted',
-    submittedAt,
-    aiResult,
+    id: cid, zoneId, category, description,
+    priority: currentPriority, lat: currentLat, lng: currentLng,
+    photo: photoBase64 ? `data:image/jpeg;base64,${photoBase64}` : null,
+    status: 'submitted', submittedAt, aiResult,
     timeline: {
-      submitted: { done: true, time: submittedAt },
-      verified:  { done: false },
-      assigned:  { done: false },
-      progress:  { done: false },
-      resolved:  { done: false }
+      submitted: { done:true, time:submittedAt },
+      verified:  { done:false },
+      assigned:  { done:false },
+      progress:  { done:false },
+      resolved:  { done:false }
     }
   };
 
-  // ── POST to server → Supabase ──
   let savedToDb = false;
   try {
     const r = await fetch(`${API_BASE}/api/complaints`, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(complaint)
+      body: JSON.stringify(complaint)
     });
     const d = await r.json();
-    if (r.ok && d.source === 'supabase') {
-      savedToDb = true;
-      console.log(`✅ Saved to Supabase: ${cid}`);
-    } else if (d.detail) {
-      console.warn(`⚠️ Server response: ${d.detail}`);
-    }
-  } catch (e) {
-    console.warn('Server offline — saving to localStorage only:', e.message);
-  }
+    if (r.ok) savedToDb = true;
+  } catch(e) { /* offline */ }
 
-  // Always save to localStorage as local backup
   const stored = JSON.parse(localStorage.getItem(COMPLAINTS_KEY) || '[]');
   stored.unshift(complaint);
   localStorage.setItem(COMPLAINTS_KEY, JSON.stringify(stored));
   complaintId = cid;
 
-  // UI update
   document.getElementById('success-id').textContent   = cid;
   document.getElementById('success-zone').textContent = zoneId;
   document.getElementById('track-cid').textContent    = cid;
   document.getElementById('track-zone').textContent   = `Zone: ${zoneId}`;
   document.getElementById('success-card').classList.add('visible');
 
-  // Update marker popup
   if (complaintMarker) {
     const color = getPriorityColor(currentPriority);
     complaintMarker.setPopupContent(`<div class="popup-inner">
@@ -1118,11 +1126,10 @@ async function submitComplaint() {
   btn.disabled = false;
   btn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Complaint Submitted!';
   btn.style.background = 'var(--accent2)';
-
-  showToast(savedToDb ? `✅ ${cid} saved to database!` : `✅ ${cid} submitted (offline backup)`);
+  showToast(savedToDb ? `✅ ${cid} saved!` : `✅ ${cid} submitted!`);
 }
 
-// ── SIMULATE TIMELINE ──
+// ── TIMELINE SIMULATION ──
 function simulateTimeline(cid, submittedAt) {
   const steps = [
     { key:'verified', delay:8000  },
@@ -1151,6 +1158,13 @@ function openTrackSheet() {
   document.getElementById('track-cid').textContent  = c.id;
   document.getElementById('track-zone').textContent = `Zone: ${c.zoneId || '—'}`;
 
+  // Show reported date and status
+  document.getElementById('track-reported-date').textContent = 'Reported: ' + (c.submittedAt || '—');
+  const statusBadge = document.getElementById('track-status-badge');
+  const statusLabel = c.status === 'resolved' ? 'Resolved' : c.status === 'progress' ? 'In Progress' : c.status === 'assigned' ? 'Assigned' : c.status === 'verified' ? 'Verified' : 'Submitted';
+  statusBadge.textContent = statusLabel;
+  statusBadge.className   = 'meta-status ' + (c.status === 'resolved' ? 'status-resolved' : 'status-pending');
+
   const tl    = c.timeline || {};
   const steps = ['submitted','verified','assigned','progress','resolved'];
   const elMap = { submitted:'tl-submitted', verified:'tl-verified', assigned:'tl-assigned', progress:'tl-progress', resolved:'tl-resolved' };
@@ -1166,26 +1180,48 @@ function openTrackSheet() {
     else { meta.textContent = 'Pending'; }
   });
 
+  // Before image: citizen-uploaded photo
   if (c.photo) {
     document.getElementById('ba-before-img').src = c.photo;
     document.getElementById('ba-before-img').style.display = 'block';
     document.getElementById('ba-before-placeholder').style.display = 'none';
+  } else {
+    document.getElementById('ba-before-img').style.display = 'none';
+    document.getElementById('ba-before-placeholder').style.display = 'flex';
   }
+
+  // After image: check localStorage for admin-uploaded after image for this complaint
+  const afterKey = 'swm_after_' + c.id;
+  const afterSrc = localStorage.getItem(afterKey);
+  if (afterSrc) {
+    document.getElementById('ba-after-img').src = afterSrc;
+    document.getElementById('ba-after-img').style.display = 'block';
+    document.getElementById('ba-after-placeholder').style.display = 'none';
+  } else {
+    document.getElementById('ba-after-img').style.display = 'none';
+    document.getElementById('ba-after-placeholder').style.display = 'flex';
+  }
+
   document.getElementById('feedback-section').style.display = tl.resolved?.done ? 'block' : 'none';
   document.getElementById('track-overlay').classList.add('open');
 }
 
 function closeTrackSheet() { document.getElementById('track-overlay').classList.remove('open'); }
 
-// ── AFTER UPLOAD ──
+// ── AFTER UPLOAD (Admin) ──
 function handleAfterUpload(e) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    document.getElementById('ba-after-img').src = ev.target.result;
+    const src = ev.target.result;
+    document.getElementById('ba-after-img').src = src;
     document.getElementById('ba-after-img').style.display = 'block';
     document.getElementById('ba-after-placeholder').style.display = 'none';
-    showToast('After-cleaning image uploaded!');
+    // Save after image for this complaint
+    const stored = JSON.parse(localStorage.getItem(COMPLAINTS_KEY) || '[]');
+    const cid = complaintId || stored[0]?.id;
+    if (cid) localStorage.setItem('swm_after_' + cid, src);
+    showToast('After-cleaning image uploaded by authority!');
   };
   reader.readAsDataURL(file);
 }
@@ -1220,7 +1256,6 @@ function showToast(msg, err=false) {
 window.addEventListener('DOMContentLoaded', () => {
   initMap();
   getLocation();
-  // Set initial zone id
   currentZoneId = computeZoneId(currentLat, currentLng);
   document.getElementById('zone-id-display').textContent = currentZoneId;
   document.getElementById('resolution-time').textContent = 'Within 24 Hours';

@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Waste – Hotspots</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg: #081122;
+  --surface: #0d1a2e;
+  --surface2: #112240;
+  --surface3: #162d50;
+  --border: #1a2f4a;
+  --border2: #1e3a5f;
+  --accent: #22c55e;
+  --accent2: #16a34a;
+  --accent-glow: rgba(34,197,94,.18);
+  --accent-dim: rgba(34,197,94,.08);
+  --red: #ef4444;
+  --orange: #f97316;
+  --yellow: #eab308;
+  --blue: #3b82f6;
+  --purple: #a855f7;
+  --cyan: #06b6d4;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #4a6080;
+  --radius: 10px;
+  --radius2: 14px;
+  --shadow: 0 4px 24px rgba(0,0,0,.5);
+  --glass: rgba(13,26,46,.75);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; height:100vh; display:flex; overflow:hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  z-index: 100;
+}
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: .01em;
+}
+.sidebar-logo svg { flex-shrink: 0; }
+.nav-section { padding: 14px 12px 6px; }
+.nav-section-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; padding: 0 8px; margin-bottom: 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  cursor: pointer; transition: .15s; text-decoration: none;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); border: 1px solid rgba(34,197,94,.2); color: var(--accent); }
+.nav-item svg { flex-shrink: 0; opacity: .7; }
+.nav-item.active svg { opacity: 1; }
+.nav-badge { margin-left: auto; background: var(--accent); color: #000; border-radius: 5px; font-size: 10px; font-weight: 700; padding: 1px 6px; }
+.sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
+.user-pill { display:flex; align-items:center; gap:10px; background:var(--surface2); border-radius:10px; padding:8px 10px; }
+.user-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#059669); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:#fff; flex-shrink:0; }
+.user-name { font-size:12px; font-weight:600; }
+.user-role { font-size:10px; color:var(--text3); }
+
+/* ── MAIN AREA ── */
+.main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* ── TOP BAR ── */
+.topbar {
+  height:54px; background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:12px; padding:0 20px;
+  flex-shrink:0; z-index:50;
+}
+.topbar-title { font-size:15px; font-weight:700; }
+.topbar-sub { font-size:12px; color:var(--text2); }
+.topbar-sep { width:1px; height:20px; background:var(--border2); }
+.topbar-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.live-badge {
+  display:flex; align-items:center; gap:5px;
+  background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25);
+  border-radius:6px; padding:4px 10px; font-size:11px; font-weight:600; color:var(--accent);
+}
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+/* ── KPI BAR ── */
+.kpi-bar {
+  display:grid; grid-template-columns:repeat(5,1fr);
+  gap:0; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.kpi-card {
+  padding:12px 18px; border-right:1px solid var(--border);
+  display:flex; align-items:center; gap:12px;
+  background:var(--surface); transition:.15s;
+}
+.kpi-card:last-child { border-right:none; }
+.kpi-card:hover { background:var(--surface2); }
+.kpi-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.kpi-val { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; line-height:1; }
+.kpi-label { font-size:11px; color:var(--text2); margin-top:2px; }
+.kpi-delta { font-size:10px; font-weight:600; margin-top:2px; }
+.delta-up { color:var(--red); }
+.delta-down { color:var(--accent); }
+
+/* ── CONTENT GRID ── */
+.content-grid {
+  flex:1; display:grid;
+  grid-template-columns: 380px 1fr;
+  grid-template-rows: 1fr 220px;
+  gap:0; overflow:hidden;
+}
+
+/* LEFT: complaint table panel */
+.left-panel {
+  grid-row: 1 / 3;
+  border-right: 1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.panel-header {
+  padding:12px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px; flex-shrink:0;
+  background:var(--surface);
+}
+.panel-header-title { font-size:13px; font-weight:700; }
+.panel-header-sub { font-size:11px; color:var(--text2); }
+.panel-badge { font-family:'JetBrains Mono',monospace; font-size:11px; background:var(--accent-dim); border:1px solid rgba(34,197,94,.2); color:var(--accent); border-radius:5px; padding:2px 7px; margin-left:auto; }
+
+/* Zone filter strip */
+.zone-filter-strip {
+  padding:8px 12px; border-bottom:1px solid var(--border);
+  display:flex; gap:6px; flex-wrap:wrap; background:var(--surface);
+  flex-shrink:0;
+}
+.zone-chip {
+  padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600;
+  background:var(--surface2); border:1px solid var(--border2); color:var(--text2);
+  cursor:pointer; transition:.15s;
+}
+.zone-chip:hover { border-color:var(--accent); color:var(--accent); }
+.zone-chip.active { background:var(--accent-dim); border-color:rgba(34,197,94,.4); color:var(--accent); }
+
+/* Complaint table */
+.complaints-scroll { flex:1; overflow-y:auto; }
+.complaint-row {
+  display:flex; flex-direction:column; gap:4px;
+  padding:10px 14px; border-bottom:1px solid var(--border);
+  cursor:pointer; transition:.15s; position:relative;
+}
+.complaint-row:hover { background:var(--surface2); }
+.complaint-row.selected { background:var(--surface3); border-left:3px solid var(--accent); }
+.complaint-row.selected { padding-left:11px; }
+.cr-top { display:flex; align-items:center; gap:6px; }
+.cr-id { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--cyan); }
+.cr-cat { font-size:12px; font-weight:600; }
+.cr-sev { font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px; margin-left:auto; }
+.sev-low { background:rgba(34,197,94,.15); color:var(--accent); }
+.sev-medium { background:rgba(234,179,8,.15); color:var(--yellow); }
+.sev-high { background:rgba(249,115,22,.15); color:var(--orange); }
+.sev-critical { background:rgba(239,68,68,.15); color:var(--red); }
+.cr-addr { font-size:11px; color:var(--text2); display:flex; align-items:center; gap:4px; }
+.cr-addr a { color:var(--blue); text-decoration:none; font-size:10px; }
+.cr-addr a:hover { text-decoration:underline; }
+.cr-meta { display:flex; align-items:center; gap:8px; }
+.cr-zone { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--blue); background:rgba(59,130,246,.1); border-radius:4px; padding:1px 6px; }
+.cr-time { font-size:10px; color:var(--text3); margin-left:auto; }
+.cr-status { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; }
+.st-submitted { background:rgba(59,130,246,.15); color:var(--blue); }
+.st-verified { background:rgba(6,182,212,.15); color:var(--cyan); }
+.st-assigned { background:rgba(168,85,247,.15); color:var(--purple); }
+.st-progress { background:rgba(249,115,22,.15); color:var(--orange); }
+.st-resolved { background:rgba(34,197,94,.15); color:var(--accent); }
+
+/* image thumb */
+.cr-thumb { width:38px; height:38px; border-radius:6px; object-fit:cover; border:1px solid var(--border2); flex-shrink:0; cursor:pointer; }
+.cr-thumb-placeholder { width:38px; height:38px; border-radius:6px; background:var(--surface3); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* Empty state */
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:200px; gap:10px; color:var(--text3); }
+.empty-state svg { opacity:.3; }
+.empty-state p { font-size:13px; }
+
+/* RIGHT TOP: Map */
+.map-panel { border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
+.map-toolbar {
+  position:absolute; top:10px; left:10px; z-index:400;
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+.map-tab {
+  padding:5px 12px; border-radius:6px; font-size:11px; font-weight:600;
+  cursor:pointer; background:var(--glass); border:1px solid var(--border2);
+  color:var(--text2); transition:.15s; backdrop-filter:blur(8px);
+}
+.map-tab.active { background:var(--accent-glow); border-color:var(--accent); color:var(--accent); }
+.map-legend-bar {
+  position:absolute; bottom:10px; left:10px; z-index:400;
+  display:flex; gap:10px; background:var(--glass); backdrop-filter:blur(8px);
+  border:1px solid var(--border2); border-radius:8px; padding:6px 12px;
+}
+.legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text2); }
+.legend-dot { width:8px; height:8px; border-radius:50%; }
+#map { width:100%; height:100%; }
+
+/* Leaflet popup override */
+.leaflet-popup-content-wrapper { background:var(--surface2)!important; border:1px solid var(--border2)!important; border-radius:var(--radius2)!important; box-shadow:var(--shadow)!important; color:var(--text)!important; }
+.leaflet-popup-tip { background:var(--surface2)!important; }
+.popup-inner { font-family:'Space Grotesk',sans-serif; min-width:220px; }
+.popup-inner h4 { font-size:13px; font-weight:600; margin-bottom:4px; }
+.popup-inner p { font-size:11px; color:var(--text2); line-height:1.5; }
+.popup-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; margin-top:5px; text-transform:uppercase; }
+.popup-img { width:100%; height:90px; object-fit:cover; border-radius:6px; margin:6px 0 4px; }
+.popup-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:5px 10px; background:var(--accent); color:#000;
+  border:none; border-radius:6px; font-size:11px; font-weight:700;
+  cursor:pointer; margin-top:6px; font-family:inherit;
+}
+.popup-btn:hover { background:var(--accent2); }
+
+/* RIGHT BOTTOM: Analytics */
+.analytics-panel {
+  display:grid; grid-template-columns: 1fr 1fr 1fr;
+  overflow:hidden;
+}
+.analytics-card {
+  padding:14px 16px; border-right:1px solid var(--border);
+  display:flex; flex-direction:column; gap:8px; overflow:hidden;
+}
+.analytics-card:last-child { border-right:none; }
+.analytics-title { font-size:12px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px; }
+.analytics-sub { font-size:10px; color:var(--text3); }
+.ai-powered-badge { font-size:9px; font-weight:600; background:rgba(168,85,247,.15); color:var(--purple); border:1px solid rgba(168,85,247,.3); border-radius:4px; padding:1px 6px; margin-left:auto; }
+
+/* Donut chart (CSS) */
+.donut-wrap { display:flex; align-items:center; gap:12px; flex:1; min-height:0; }
+.donut-svg { flex-shrink:0; }
+.donut-legend { display:flex; flex-direction:column; gap:4px; font-size:11px; flex:1; }
+.donut-row { display:flex; align-items:center; gap:6px; }
+.donut-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+.donut-label { color:var(--text2); flex:1; }
+.donut-pct { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:11px; }
+
+/* Trend sparkline */
+.trend-wrap { flex:1; display:flex; flex-direction:column; gap:6px; min-height:0; }
+.trend-svg-wrap { flex:1; position:relative; }
+#trend-svg { width:100%; height:100%; }
+
+/* Top zones table */
+.zone-table { flex:1; overflow-y:auto; }
+.zone-table-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); font-size:11px; }
+.zone-table-row:last-child { border-bottom:none; }
+.zone-rank { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text3); width:18px; }
+.zone-id-cell { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--blue); }
+.zone-bar-wrap { flex:1; height:5px; background:var(--surface3); border-radius:3px; overflow:hidden; }
+.zone-bar-fill { height:100%; border-radius:3px; background:var(--accent); transition:.5s; }
+.zone-count { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text2); width:28px; text-align:right; }
+
+/* Image Lightbox */
+.lightbox { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.85); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+.lightbox.open { display:flex; }
+.lightbox img { max-width:90vw; max-height:75vh; border-radius:var(--radius2); border:2px solid var(--border2); box-shadow:var(--shadow); object-fit:contain; }
+.lightbox-close { position:absolute; top:20px; right:24px; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:6px 14px; font-size:13px; color:var(--text2); cursor:pointer; font-family:inherit; }
+.lightbox-info { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius2); padding:14px 20px; max-width:600px; width:90vw; }
+.lightbox-info h3 { font-size:13px; font-weight:700; margin-bottom:6px; }
+.lightbox-meta { display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px; color:var(--text2); }
+.lightbox-ai { margin-top:10px; padding:10px; background:rgba(168,85,247,.08); border:1px solid rgba(168,85,247,.2); border-radius:8px; }
+.lightbox-ai .ai-label { font-size:10px; font-weight:700; color:var(--purple); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+.lightbox-ai .ai-text { font-size:12px; color:var(--text2); line-height:1.6; }
+.ai-spinner { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); }
+.spinner { width:12px; height:12px; border:2px solid var(--border2); border-top-color:var(--purple); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; right:24px; z-index:2000; background:var(--surface2); border:1px solid var(--accent); border-radius:var(--radius); padding:10px 16px; font-size:13px; color:var(--accent); box-shadow:var(--shadow); transform:translateX(120%); transition:.3s; display:flex; align-items:center; gap:8px; }
+.toast.show { transform:translateX(0); }
+.toast.error { border-color:var(--red); color:var(--red); }
+
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:9px; }
+
+/* Zone hover info */
+.zone-hover-overlay { position:absolute; top:50px; right:10px; z-index:400; background:var(--glass); backdrop-filter:blur(8px); border:1px solid var(--border2); border-radius:var(--radius); padding:10px 14px; font-size:12px; pointer-events:none; display:none; }
+.zone-hover-overlay.visible { display:block; }
+
+/* Responsive: hide sidebar on narrow screens */
+@media(max-width:900px){ .sidebar { display:none; } .kpi-bar { grid-template-columns:repeat(3,1fr); } }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    SMART WASTE
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Main</div>
+    <a href="#" class="nav-item">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="#" class="nav-item">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+      Map View
+    </a>
+    <a href="#" class="nav-item active">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Hotspots
+      <span class="nav-badge" id="sidebar-hotspot-count">0</span>
+    </a>
+    <a href="complaints.html" class="nav-item">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Complaints
+    </a>
+    <a href="#" class="nav-item">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Trucks
+    </a>
+    <a href="#" class="nav-item">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      Reports
+    </a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-pill">
+      <div class="user-avatar">RK</div>
+      <div>
+        <div class="user-name">Rohan K.</div>
+        <div class="user-role">Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN AREA ── -->
+<div class="main-area">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <svg width="16" height="16" fill="none" stroke="var(--red)" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+      <div class="topbar-title">Waste Hotspots</div>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-sub" id="topbar-sub">Showing all complaints across all zones</div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+      <button onclick="refreshComplaints()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Bar -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(239,68,68,.12)">
+        <svg width="18" height="18" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div>
+        <div class="kpi-val" id="kpi-total" style="color:var(--red)">—</div>
+        <div class="kpi-label">Total Hotspots</div>
+        <div class="kpi-delta delta-up" id="kpi-total-delta">Loading…</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(239,68,68,.12)">
+        <svg width="18" height="18" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="kpi-val" id="kpi-critical" style="color:var(--red)">—</div>
+        <div class="kpi-label">Critical / Emergency</div>
+        <div class="kpi-delta delta-up" id="kpi-critical-delta">—</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(249,115,22,.12)">
+        <svg width="18" height="18" fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div>
+        <div class="kpi-val" id="kpi-pending" style="color:var(--orange)">—</div>
+        <div class="kpi-label">Pending Resolution</div>
+        <div class="kpi-delta delta-up" id="kpi-pending-delta">—</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(34,197,94,.12)">
+        <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <div class="kpi-val" id="kpi-resolved" style="color:var(--accent)">—</div>
+        <div class="kpi-label">Resolved Today</div>
+        <div class="kpi-delta delta-down" id="kpi-resolved-delta">—</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(59,130,246,.12)">
+        <svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+      </div>
+      <div>
+        <div class="kpi-val" id="kpi-zones" style="color:var(--blue)">—</div>
+        <div class="kpi-label">Active Zones</div>
+        <div class="kpi-delta" style="color:var(--text3)" id="kpi-zones-delta">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+
+    <!-- LEFT: Complaints Table -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <svg width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <div class="panel-header-title">Hotspot Complaints</div>
+          <div class="panel-header-sub">Click row to locate on map · Click image to analyse</div>
+        </div>
+        <div class="panel-badge" id="complaint-count-badge">0 records</div>
+      </div>
+
+      <!-- Zone filter chips -->
+      <div class="zone-filter-strip" id="zone-filter-strip">
+        <div class="zone-chip active" onclick="filterByZone('all', this)">All Zones</div>
+      </div>
+
+      <!-- Complaint rows -->
+      <div class="complaints-scroll" id="complaints-list">
+        <div class="empty-state">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <p>Loading complaints…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT TOP: Map -->
+    <div class="map-panel">
+      <div class="map-toolbar">
+        <button class="map-tab active" onclick="switchTab('osm',this)">Map</button>
+        <button class="map-tab" onclick="switchTab('satellite',this)">Satellite</button>
+        <button class="map-tab" onclick="switchTab('zones',this)">Zone Grid</button>
+      </div>
+      <div class="map-legend-bar">
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Clean</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div> Moderate</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div> Dirty</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Critical</div>
+      </div>
+      <div class="zone-hover-overlay" id="zone-hover-overlay">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--blue)" id="zh-zone-id">—</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px" id="zh-coords">—</div>
+        <div style="font-size:10px;color:var(--text3)">5 km × 5 km · 25 km²</div>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <!-- RIGHT BOTTOM: Analytics -->
+    <div class="analytics-panel">
+
+      <!-- Donut: Waste Category Distribution -->
+      <div class="analytics-card">
+        <div class="analytics-title">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Waste Category Distribution
+          <span class="ai-powered-badge">AI</span>
+        </div>
+        <div class="analytics-sub" id="donut-sub">Based on selected complaint image</div>
+        <div class="donut-wrap" id="donut-wrap">
+          <svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80" id="donut-svg">
+            <circle cx="40" cy="40" r="28" fill="none" stroke="var(--surface3)" stroke-width="14"/>
+            <!-- segments drawn by JS -->
+          </svg>
+          <div class="donut-legend" id="donut-legend">
+            <div style="font-size:11px;color:var(--text3)">Select a complaint with an image to generate AI analysis</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sparkline: Hotspot Trend -->
+      <div class="analytics-card">
+        <div class="analytics-title">
+          <svg width="13" height="13" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Hotspot Trend
+          <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">(Past 7 Days)</span>
+          <span class="ai-powered-badge">AI</span>
+        </div>
+        <div class="analytics-sub" id="trend-sub">Complaints per day across all zones</div>
+        <div class="trend-wrap">
+          <div class="trend-svg-wrap">
+            <svg id="trend-svg" viewBox="0 0 300 120" preserveAspectRatio="none">
+              <!-- drawn by JS -->
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);" id="trend-dates"></div>
+        </div>
+      </div>
+
+      <!-- Top Hotspot Zones -->
+      <div class="analytics-card">
+        <div class="analytics-title">
+          <svg width="13" height="13" fill="none" stroke="var(--orange)" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+          Top Hotspot Zones
+        </div>
+        <div class="analytics-sub">Ranked by complaint count</div>
+        <div class="zone-table" id="zone-table">
+          <div style="font-size:11px;color:var(--text3);padding:8px 0">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── IMAGE LIGHTBOX ── -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕ Close</button>
+  <img id="lightbox-img" src="" alt="Complaint Photo"/>
+  <div class="lightbox-info" id="lightbox-info">
+    <h3 id="lb-title">—</h3>
+    <div class="lightbox-meta" id="lb-meta"></div>
+    <div class="lightbox-ai" id="lb-ai">
+      <div class="ai-label">🤖 Groq AI Analysis</div>
+      <div class="ai-text" id="lb-ai-text">
+        <div class="ai-spinner"><div class="spinner"></div> Analysing image with Groq AI…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+
+// ── ZONE SYSTEM (matches complaints.html) ──
+const ZONE_ORIGIN_LAT = 6.5;
+const ZONE_ORIGIN_LNG = 68.0;
+const ZONE_DEG = 5 / 111.0;
+
+const STATE_MAP = {
+  MH:{ latMin:15.6, latMax:22.1, lngMin:72.6, lngMax:80.9 },
+  KA:{ latMin:11.5, latMax:18.5, lngMin:74.0, lngMax:78.6 },
+  TN:{ latMin:8.0,  latMax:13.6, lngMin:76.2, lngMax:80.3 },
+  AP:{ latMin:12.6, latMax:19.9, lngMin:76.8, lngMax:84.8 },
+  GJ:{ latMin:20.1, latMax:24.7, lngMin:68.2, lngMax:74.5 },
+  RJ:{ latMin:23.0, latMax:30.2, lngMin:69.5, lngMax:78.3 },
+  UP:{ latMin:23.9, latMax:30.4, lngMin:77.1, lngMax:84.6 },
+  DL:{ latMin:28.4, latMax:28.9, lngMin:76.8, lngMax:77.4 },
+};
+
+function getStateCode(lat, lng) {
+  for (const [k, s] of Object.entries(STATE_MAP)) {
+    if (lat>=s.latMin && lat<=s.latMax && lng>=s.lngMin && lng<=s.lngMax) return k;
+  }
+  return 'IN';
+}
+
+function computeZoneId(lat, lng) {
+  const state = getStateCode(lat, lng);
+  const row = Math.floor((lat - ZONE_ORIGIN_LAT) / ZONE_DEG);
+  const col = Math.floor((lng - ZONE_ORIGIN_LNG) / ZONE_DEG);
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const L = letters[Math.floor(row / 1000) % 26];
+  const num = String((row * 31 + col) % 999 + 1).padStart(3,'0');
+  // District code
+  const c1 = letters[Math.floor(col/676)%26];
+  const c2 = letters[Math.floor(col/26)%26];
+  const c3 = letters[col%26];
+  return `${state}-${c1}${c2}${c3}-${L}${num}`;
+}
+
+// ── STATE ──
+let mapInstance = null, zoneLayerGroup = null, markerLayerGroup = null, currentTileLayer = null;
+let allComplaints = [];
+let filteredComplaints = [];
+let selectedComplaintId = null;
+let currentZoneFilter = 'all';
+let trendData = [];
+const COMPLAINTS_KEY = 'swm_complaints';
+const markerRefs = {}; // complaintId → leaflet marker
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  loadComplaints();
+  setInterval(loadComplaints, 30000); // auto-refresh every 30s
+});
+
+// ── MAP INIT ──
+function initMap() {
+  mapInstance = L.map('map', { zoomControl:false }).setView([20.5937, 78.9629], 5);
+  L.control.zoom({ position:'bottomright' }).addTo(mapInstance);
+  currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; OpenStreetMap', maxZoom:19
+  }).addTo(mapInstance);
+  zoneLayerGroup  = L.layerGroup().addTo(mapInstance);
+  markerLayerGroup = L.layerGroup().addTo(mapInstance);
+
+  mapInstance.on('moveend zoomend', () => {
+    const zoom = mapInstance.getZoom();
+    const c = mapInstance.getCenter();
+    if (zoom >= 8) renderZoneGrid(c.lat, c.lng, zoom);
+    else zoneLayerGroup.clearLayers();
+  });
+  renderZoneGrid(20.5937, 78.9629, 5);
+}
+
+function switchTab(type, btn) {
+  document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (type === 'zones') {
+    renderZoneGrid(mapInstance.getCenter().lat, mapInstance.getCenter().lng, mapInstance.getZoom());
+    return;
+  }
+  if (currentTileLayer) mapInstance.removeLayer(currentTileLayer);
+  if (type === 'satellite') {
+    currentTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Esri',maxZoom:19}).addTo(mapInstance);
+  } else {
+    currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OpenStreetMap',maxZoom:19}).addTo(mapInstance);
+  }
+}
+
+// ── ZONE GRID ──
+function renderZoneGrid(centerLat, centerLng, zoom) {
+  zoneLayerGroup.clearLayers();
+  const spread = zoom >= 12 ? 3 : zoom >= 9 ? 8 : 18;
+  const cr = Math.floor((centerLat - ZONE_ORIGIN_LAT) / ZONE_DEG);
+  const cc = Math.floor((centerLng - ZONE_ORIGIN_LNG) / ZONE_DEG);
+  const ZONE_COLORS = ['#22c55e','#eab308','#f97316','#ef4444'];
+  const sevLabels   = ['Clean','Moderate','Dirty','Critical'];
+
+  // Overlay hotspot zones brighter
+  const hotspotZoneSet = {};
+  allComplaints.forEach(c => { if (c.zoneId) hotspotZoneSet[c.zoneId] = (hotspotZoneSet[c.zoneId]||0)+1; });
+
+  for (let dr=-spread; dr<=spread; dr++) {
+    for (let dc=-spread; dc<=spread; dc++) {
+      const row = cr+dr, col = cc+dc;
+      if (row<0 || col<0) continue;
+      const swLat = ZONE_ORIGIN_LAT + row*ZONE_DEG;
+      const swLng = ZONE_ORIGIN_LNG + col*ZONE_DEG;
+      const cLat  = swLat + ZONE_DEG/2;
+      const cLng  = swLng + ZONE_DEG/2;
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const L = letters[Math.floor(row/1000)%26];
+      const num = String((row*31+col)%999+1).padStart(3,'0');
+      const st = getStateCode(cLat,cLng);
+      const c1=letters[Math.floor(col/676)%26];
+      const c2=letters[Math.floor(col/26)%26];
+      const c3=letters[col%26];
+      const zoneId = `${st}-${c1}${c2}${c3}-${L}${num}`;
+      const sevIdx = (row*7+col*13)%4;
+      const color  = ZONE_COLORS[sevIdx];
+      const isHotspot = hotspotZoneSet[zoneId];
+      const fillOp = isHotspot ? 0.28 : 0.08;
+      const weight = isHotspot ? 2.5 : 1;
+
+      const rect = L.rectangle([
+        [swLat, swLng],
+        [swLat+ZONE_DEG, swLng+ZONE_DEG]
+      ], {
+        color: isHotspot ? '#ef4444' : color,
+        fillColor: isHotspot ? '#ef4444' : color,
+        fillOpacity: fillOp,
+        weight, opacity: isHotspot ? 0.8 : 0.4
+      });
+
+      rect.bindPopup(`<div class="popup-inner">
+        <h4>${zoneId}</h4>
+        <p>5 km × 5 km · 25 km² zone</p>
+        <p style="font-size:10px;color:#94a3b8">Centre: ${cLat.toFixed(4)}°N, ${cLng.toFixed(4)}°E</p>
+        ${isHotspot ? `<p style="color:#ef4444;font-weight:600;font-size:12px">🔥 ${isHotspot} complaint(s)</p>` : ''}
+        <span class="popup-badge" style="background:${color}22;color:${color}">${sevLabels[sevIdx]}</span>
+        <br/><button class="popup-btn" onclick="filterByZoneId('${zoneId}')">View Complaints</button>
+      </div>`, { maxWidth:240 });
+
+      rect.on('mouseover', () => {
+        document.getElementById('zh-zone-id').textContent = zoneId;
+        document.getElementById('zh-coords').textContent = `${cLat.toFixed(3)}°N, ${cLng.toFixed(3)}°E`;
+        document.getElementById('zone-hover-overlay').classList.add('visible');
+      });
+      rect.on('mouseout', () => {
+        document.getElementById('zone-hover-overlay').classList.remove('visible');
+      });
+      zoneLayerGroup.addLayer(rect);
+    }
+  }
+}
+
+// ── LOAD COMPLAINTS ──
+async function loadComplaints() {
+  let complaints = [];
+  // 1. Try server
+  try {
+    const r = await fetch(`${API_BASE}/api/complaints?limit=200`);
+    if (r.ok) {
+      const d = await r.json();
+      // Normalize server format vs localStorage format
+      complaints = (d.complaints || []).map(normalizeComplaint);
+    }
+  } catch(e) { /* offline */ }
+
+  // 2. Merge with localStorage (in case server is offline)
+  const local = JSON.parse(localStorage.getItem(COMPLAINTS_KEY)||'[]');
+  const serverIds = new Set(complaints.map(c=>c.id));
+  for (const lc of local) {
+    if (!serverIds.has(lc.id)) complaints.push(lc);
+  }
+
+  allComplaints = complaints;
+  applyFilter(currentZoneFilter);
+  updateKPIs();
+  updateZoneChips();
+  renderTopZones();
+  renderTrendChart();
+  placeAllMarkers();
+  document.getElementById('sidebar-hotspot-count').textContent = complaints.length;
+}
+
+function normalizeComplaint(c) {
+  // Server returns snake_case
+  return {
+    id:          c.id          || c.complaint_id || 'UNK',
+    zoneId:      c.zoneId      || c.zone_id       || computeZoneId(parseFloat(c.lat)||20, parseFloat(c.lng)||78),
+    category:    c.category    || 'Unknown',
+    description: c.description || '',
+    priority:    c.priority    || 'Medium',
+    lat:         parseFloat(c.lat) || 20,
+    lng:         parseFloat(c.lng) || 78,
+    photo:       c.photo       || c.photo_base64  || null,
+    status:      c.status      || 'submitted',
+    submittedAt: c.submittedAt || c.submitted_at  || '—',
+    aiResult:    c.aiResult    || null,
+    timeline:    c.timeline    || {},
+  };
+}
+
+function refreshComplaints() { loadComplaints(); showToast('Refreshed complaints'); }
+
+// ── ZONE CHIPS ──
+function updateZoneChips() {
+  const zoneSet = new Set(allComplaints.map(c=>c.zoneId).filter(Boolean));
+  const strip = document.getElementById('zone-filter-strip');
+  strip.innerHTML = `<div class="zone-chip ${currentZoneFilter==='all'?'active':''}" onclick="filterByZone('all',this)">All Zones</div>`;
+  [...zoneSet].slice(0,12).forEach(z => {
+    strip.innerHTML += `<div class="zone-chip ${currentZoneFilter===z?'active':''}" onclick="filterByZone('${z}',this)">${z}</div>`;
+  });
+}
+
+function filterByZone(zone, el) {
+  currentZoneFilter = zone;
+  document.querySelectorAll('.zone-chip').forEach(c=>c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  applyFilter(zone);
+  renderTopZones();
+}
+
+function filterByZoneId(zoneId) {
+  currentZoneFilter = zoneId;
+  updateZoneChips();
+  applyFilter(zoneId);
+  renderTopZones();
+  showToast(`Filtering zone: ${zoneId}`);
+}
+
+function applyFilter(zone) {
+  filteredComplaints = zone === 'all' ? [...allComplaints] : allComplaints.filter(c=>c.zoneId===zone);
+  renderComplaintList();
+  document.getElementById('complaint-count-badge').textContent = filteredComplaints.length + ' records';
+  document.getElementById('topbar-sub').textContent = zone === 'all'
+    ? `Showing all ${filteredComplaints.length} complaints across all zones`
+    : `Showing ${filteredComplaints.length} complaints in zone ${zone}`;
+}
+
+// ── RENDER COMPLAINT LIST ──
+function renderComplaintList() {
+  const list = document.getElementById('complaints-list');
+  if (filteredComplaints.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>No complaints found</p>
+      <p style="font-size:11px;color:var(--text3)">Submit one via the Complaints page</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = filteredComplaints.map(c => buildComplaintRow(c)).join('');
+}
+
+function buildComplaintRow(c) {
+  const sevClass = getSevClass(c.priority);
+  const stClass  = getStatusClass(c.status);
+  const thumb    = c.photo
+    ? `<img class="cr-thumb" src="${c.photo}" alt="photo" onclick="openLightbox(event,'${c.id}')" title="Click to analyse with AI"/>`
+    : `<div class="cr-thumb-placeholder"><svg width="14" height="14" fill="none" stroke="var(--text3)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+  const mapLink  = `https://www.openstreetmap.org/?mlat=${c.lat}&mlon=${c.lng}#map=16/${c.lat}/${c.lng}`;
+  const selected = selectedComplaintId === c.id ? 'selected' : '';
+  return `<div class="complaint-row ${selected}" onclick="selectComplaint('${c.id}')" id="crow-${c.id}">
+    <div class="cr-top">
+      ${thumb}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="cr-id">${c.id.substring(0,18)}…</span>
+          <span class="cr-sev ${sevClass}">${c.priority}</span>
+        </div>
+        <div class="cr-cat">${c.category}</div>
+      </div>
+    </div>
+    <div class="cr-addr">
+      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      ${c.lat.toFixed(4)}°N, ${c.lng.toFixed(4)}°E
+      <a href="${mapLink}" target="_blank" onclick="event.stopPropagation()">↗ Open Map</a>
+    </div>
+    <div class="cr-meta">
+      <span class="cr-zone">${c.zoneId || '—'}</span>
+      <span class="cr-status ${stClass}">${capitalize(c.status)}</span>
+      <span class="cr-time">${c.submittedAt}</span>
+    </div>
+  </div>`;
+}
+
+function getSevClass(p) {
+  return { Low:'sev-low', Medium:'sev-medium', High:'sev-high', Emergency:'sev-critical', Critical:'sev-critical' }[p] || 'sev-medium';
+}
+function getStatusClass(s) {
+  return { submitted:'st-submitted', verified:'st-verified', assigned:'st-assigned', progress:'st-progress', resolved:'st-resolved' }[s] || 'st-submitted';
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : '—'; }
+
+// ── SELECT COMPLAINT ──
+function selectComplaint(id) {
+  selectedComplaintId = id;
+  // Update selected row
+  document.querySelectorAll('.complaint-row').forEach(r=>{
+    r.classList.toggle('selected', r.id === 'crow-'+id);
+  });
+  // Pan map to complaint
+  const c = allComplaints.find(x=>x.id===id);
+  if (c) {
+    mapInstance.flyTo([c.lat, c.lng], 14, { duration:1 });
+    if (markerRefs[id]) markerRefs[id].openPopup();
+  }
+}
+
+// ── MAP MARKERS ──
+function placeAllMarkers() {
+  markerLayerGroup.clearLayers();
+  allComplaints.forEach(c => {
+    const color = { Low:'#22c55e', Medium:'#eab308', High:'#f97316', Emergency:'#ef4444', Critical:'#ef4444' }[c.priority] || '#eab308';
+    const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="34" viewBox="0 0 36 42">
+      <path d="M18 0C8.06 0 0 8.06 0 18c0 12.77 18 24 18 24s18-11.23 18-24C36 8.06 27.94 0 18 0z" fill="${color}" opacity=".9"/>
+      <circle cx="18" cy="18" r="8" fill="white" opacity=".9"/>
+      <text x="18" y="22" text-anchor="middle" font-size="10" font-family="sans-serif" font-weight="bold" fill="${color}">!</text>
+    </svg>`;
+    const icon = L.divIcon({ html:svgIcon, iconSize:[28,34], iconAnchor:[14,34], popupAnchor:[0,-36], className:'' });
+    const thumb = c.photo ? `<img class="popup-img" src="${c.photo}" onclick="openLightboxById('${c.id}')" style="cursor:pointer" title="Click to AI analyse"/>` : '';
+    const marker = L.marker([c.lat, c.lng], { icon })
+      .bindPopup(`<div class="popup-inner">
+        <h4>${c.category}</h4>
+        ${thumb}
+        <p>${c.description?.substring(0,80) || ''}</p>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#3b82f6">Zone: ${c.zoneId||'—'}</p>
+        <p style="font-size:10px;color:#94a3b8">ID: ${c.id}</p>
+        <span class="popup-badge" style="background:${color}22;color:${color}">${c.priority}</span>
+        <span class="popup-badge" style="background:#1e3a5f;color:#94a3b8;margin-left:4px">${capitalize(c.status)}</span>
+      </div>`, { maxWidth:250 });
+    marker.on('click', () => selectComplaint(c.id));
+    markerLayerGroup.addLayer(marker);
+    markerRefs[c.id] = marker;
+  });
+}
+
+// ── KPIs ──
+function updateKPIs() {
+  const total   = allComplaints.length;
+  const crit    = allComplaints.filter(c=>['Emergency','Critical','High'].includes(c.priority)).length;
+  const pending = allComplaints.filter(c=>c.status!=='resolved').length;
+  const res     = allComplaints.filter(c=>c.status==='resolved').length;
+  const zones   = new Set(allComplaints.map(c=>c.zoneId).filter(Boolean)).size;
+  document.getElementById('kpi-total').textContent    = total;
+  document.getElementById('kpi-critical').textContent = crit;
+  document.getElementById('kpi-pending').textContent  = pending;
+  document.getElementById('kpi-resolved').textContent = res;
+  document.getElementById('kpi-zones').textContent    = zones;
+  document.getElementById('kpi-total-delta').textContent   = `${crit} high priority`;
+  document.getElementById('kpi-critical-delta').textContent= crit > 0 ? `⚠ Needs attention` : '✓ None';
+  document.getElementById('kpi-pending-delta').textContent = pending > 0 ? `${pending} unresolved` : '✓ All resolved';
+  document.getElementById('kpi-resolved-delta').textContent= `${res} of ${total} done`;
+  document.getElementById('kpi-zones-delta').textContent   = `${zones} zone(s) affected`;
+}
+
+// ── TREND CHART ──
+function renderTrendChart() {
+  // Group complaints by date
+  const dayMap = {};
+  const now = new Date();
+  for (let i=6; i>=0; i--) {
+    const d = new Date(now); d.setDate(d.getDate()-i);
+    const key = `${d.getDate()} ${d.toLocaleString('en',{month:'short'})}`;
+    dayMap[key] = 0;
+  }
+  allComplaints.forEach(c => {
+    try {
+      const d = new Date(c.submittedAt);
+      const key = `${d.getDate()} ${d.toLocaleString('en',{month:'short'})}`;
+      if (dayMap[key] !== undefined) dayMap[key]++;
+    } catch(e){}
+  });
+  const days   = Object.keys(dayMap);
+  const counts = Object.values(dayMap);
+  trendData    = counts;
+  const maxV   = Math.max(...counts, 1);
+  const W=300, H=120, PAD=10;
+  const xStep = (W-PAD*2)/(days.length-1||1);
+  const pts    = counts.map((v,i) => [PAD+i*xStep, H-PAD-(v/maxV)*(H-PAD*2)]);
+  const polyline = pts.map(p=>p.join(',')).join(' ');
+  // Area
+  const areaPath = `M${pts[0][0]},${H-PAD} ` + pts.map(p=>`L${p[0]},${p[1]}`).join(' ') + ` L${pts[pts.length-1][0]},${H-PAD} Z`;
+
+  document.getElementById('trend-svg').innerHTML = `
+    <defs>
+      <linearGradient id="tgrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <path d="${areaPath}" fill="url(#tgrad)"/>
+    <polyline points="${polyline}" fill="none" stroke="#22c55e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#22c55e" opacity=".9"/>
+    <text x="${p[0]}" y="${p[1]-7}" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono">${counts[i]}</text>`).join('')}
+  `;
+  document.getElementById('trend-dates').innerHTML = days.map(d=>`<span>${d}</span>`).join('');
+  document.getElementById('trend-sub').textContent = `Total: ${counts.reduce((a,b)=>a+b,0)} complaints in 7 days`;
+}
+
+// ── TOP HOTSPOT ZONES ──
+function renderTopZones() {
+  const base = currentZoneFilter === 'all' ? allComplaints : filteredComplaints;
+  const zoneMap = {};
+  base.forEach(c => { if(c.zoneId) zoneMap[c.zoneId] = (zoneMap[c.zoneId]||0)+1; });
+  const sorted = Object.entries(zoneMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxV = sorted[0]?.[1] || 1;
+  if (sorted.length === 0) {
+    document.getElementById('zone-table').innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">No data yet</div>';
+    return;
+  }
+  document.getElementById('zone-table').innerHTML = sorted.map(([zone,cnt],i) => `
+    <div class="zone-table-row">
+      <span class="zone-rank">${i+1}</span>
+      <span class="zone-id-cell" style="cursor:pointer" onclick="filterByZoneId('${zone}')">${zone}</span>
+      <div class="zone-bar-wrap"><div class="zone-bar-fill" style="width:${(cnt/maxV)*100}%;background:${i<2?'var(--red)':i<4?'var(--orange)':'var(--accent)'}"></div></div>
+      <span class="zone-count">${cnt}</span>
+    </div>`).join('');
+}
+
+// ── LIGHTBOX ──
+function openLightbox(event, id) {
+  event.stopPropagation();
+  openLightboxById(id);
+}
+function openLightboxById(id) {
+  const c = allComplaints.find(x=>x.id===id);
+  if (!c || !c.photo) { showToast('No image for this complaint', true); return; }
+  document.getElementById('lightbox-img').src = c.photo;
+  document.getElementById('lb-title').textContent = c.category;
+  document.getElementById('lb-meta').innerHTML = `
+    <div><b>ID:</b> ${c.id}</div>
+    <div><b>Zone:</b> ${c.zoneId||'—'}</div>
+    <div><b>Priority:</b> ${c.priority}</div>
+    <div><b>Status:</b> ${capitalize(c.status)}</div>
+    <div><b>Location:</b> ${c.lat.toFixed(4)}°N, ${c.lng.toFixed(4)}°E</div>
+    <div><b>Reported:</b> ${c.submittedAt}</div>
+  `;
+  document.getElementById('lightbox').classList.add('open');
+  // If aiResult cached, show it; otherwise call Groq
+  if (c.aiResult) {
+    displayLightboxAI(c.aiResult, c.id);
+    updateDonut(c.aiResult, c.id);
+  } else {
+    document.getElementById('lb-ai-text').innerHTML = '<div class="ai-spinner"><div class="spinner"></div> Analysing image with Groq AI…</div>';
+    runGroqForComplaint(c);
+  }
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+async function runGroqForComplaint(c) {
+  const base64 = c.photo ? c.photo.split(',')[1] : null;
+  if (!base64) { document.getElementById('lb-ai-text').textContent = 'No image to analyse.'; return; }
+  try {
+    const r = await fetch(`${API_BASE}/api/ai-analyse`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        imageBase64: base64,
+        category: c.category,
+        description: c.description,
+        priority: c.priority,
+        zoneId: c.zoneId
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'AI error');
+    const result = d.result;
+    // Cache on complaint
+    const idx = allComplaints.findIndex(x=>x.id===c.id);
+    if (idx>=0) allComplaints[idx].aiResult = result;
+    // Update localStorage
+    const local = JSON.parse(localStorage.getItem(COMPLAINTS_KEY)||'[]');
+    const li = local.findIndex(x=>x.id===c.id);
+    if (li>=0) { local[li].aiResult = result; localStorage.setItem(COMPLAINTS_KEY,JSON.stringify(local)); }
+    displayLightboxAI(result, c.id);
+    updateDonut(result, c.id);
+  } catch(e) {
+    document.getElementById('lb-ai-text').innerHTML = `<span style="color:var(--red)">AI Error: ${e.message}</span>`;
+  }
+}
+
+function displayLightboxAI(r, id) {
+  document.getElementById('lb-ai-text').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+      <div style="background:var(--surface3);border-radius:6px;padding:6px 8px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Waste Type</div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px">${r.wasteType||'—'}</div>
+      </div>
+      <div style="background:var(--surface3);border-radius:6px;padding:6px 8px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Severity</div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;color:${getSevColor(r.severity)}">${r.severity||'—'}</div>
+      </div>
+      <div style="background:var(--surface3);border-radius:6px;padding:6px 8px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Impact</div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;color:var(--red)">${r.cleanlinessImpact||'—'}</div>
+      </div>
+      <div style="background:var(--surface3);border-radius:6px;padding:6px 8px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Resolution</div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;color:var(--orange)">${r.resolution||'—'}</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">${r.summary||''}</div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3)">Action: <b style="color:var(--accent)">${r.suggestedAction||'—'}</b></div>
+  `;
+}
+
+function getSevColor(s) {
+  return { Low:'#22c55e', Medium:'#eab308', High:'#f97316', Critical:'#ef4444' }[s] || '#94a3b8';
+}
+
+// ── DONUT CHART (AI generated) ──
+const DONUT_COLORS = ['#22c55e','#3b82f6','#a855f7','#ef4444','#f97316','#eab308','#06b6d4'];
+const DONUT_LABELS = ['Organic Waste','Plastic Waste','E-Waste','Medical Waste','Construction','Mixed MSW','Other'];
+
+function updateDonut(aiResult, complaintId) {
+  // Build distribution from aiResult.wasteType + all cached aiResults for variety
+  const counts = {};
+  allComplaints.forEach(c => {
+    if (c.aiResult?.wasteType) {
+      const t = mapWasteType(c.aiResult.wasteType);
+      counts[t] = (counts[t]||0)+1;
+    }
+  });
+  // If no cached, use the current one
+  if (Object.keys(counts).length === 0 && aiResult?.wasteType) {
+    counts[mapWasteType(aiResult.wasteType)] = 1;
+  }
+  if (Object.keys(counts).length === 0) return;
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const items = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+
+  // Draw SVG donut
+  const R=28, CX=40, CY=40, SW=14;
+  let angle = -Math.PI/2;
+  let segs = '';
+  const colorMap = {};
+  items.forEach(([label, cnt], i) => {
+    const frac   = cnt/total;
+    const sweep  = frac * Math.PI * 2;
+    const x1 = CX + R*Math.cos(angle);
+    const y1 = CY + R*Math.sin(angle);
+    angle   += sweep;
+    const x2 = CX + R*Math.cos(angle);
+    const y2 = CY + R*Math.sin(angle);
+    const lg = sweep > Math.PI ? 1 : 0;
+    const col = DONUT_COLORS[i % DONUT_COLORS.length];
+    colorMap[label] = col;
+    segs += `<path d="M${CX},${CY} L${x1},${y1} A${R},${R} 0 ${lg},1 ${x2},${y2} Z" fill="${col}" opacity=".85"/>`;
+  });
+  // Center hole
+  segs += `<circle cx="${CX}" cy="${CY}" r="${R-SW/2}" fill="var(--surface)"/>`;
+  // Center text
+  segs += `<text x="${CX}" y="${CY+4}" text-anchor="middle" font-size="10" font-family="JetBrains Mono" font-weight="700" fill="var(--text)">${total}</text>`;
+  document.getElementById('donut-svg').innerHTML = segs;
+
+  // Legend
+  document.getElementById('donut-legend').innerHTML = items.slice(0,5).map(([label,cnt]) =>
+    `<div class="donut-row">
+      <div class="donut-dot" style="background:${colorMap[label]}"></div>
+      <span class="donut-label">${label}</span>
+      <span class="donut-pct" style="color:${colorMap[label]}">${Math.round(cnt/total*100)}%</span>
+    </div>`).join('');
+  document.getElementById('donut-sub').textContent = `Based on ${total} AI-analysed complaint${total!==1?'s':''}`;
+}
+
+function mapWasteType(raw) {
+  const t = raw.toLowerCase();
+  if (t.includes('organic') || t.includes('food')) return 'Organic Waste';
+  if (t.includes('plastic')) return 'Plastic Waste';
+  if (t.includes('e-waste') || t.includes('electronic')) return 'E-Waste';
+  if (t.includes('medical') || t.includes('biomedical')) return 'Medical Waste';
+  if (t.includes('construct') || t.includes('debris')) return 'Construction';
+  if (t.includes('mixed') || t.includes('msw') || t.includes('solid')) return 'Mixed MSW';
+  return 'Other';
+}
+
+// ── TOAST ──
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast'+(err?' error':'')+' show';
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
